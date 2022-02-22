@@ -1,4 +1,4 @@
-/* A very minimalist blinky program for the Trinkey m0+
+/* A very minimalist blinky program for the Trinket m0+
  * T.L. 2022
  * */
 
@@ -41,7 +41,7 @@ int main ( void )
     STK_CALIB = ( 0x270F );
     
     /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x270E * 50;
+    STK_LOAD   = 0x270F * 50;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
