@@ -8,9 +8,11 @@ startup.o: ../common/startup.s
 vectors.o: ../common/vectors.s
 	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb  ../common/vectors.s -o vectors.o
 rainbow.o: rainbow.c
-	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c rainbow.c -o rainbow.o
+	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -I../common -mthumb -c rainbow.c -o rainbow.o
+buffer.o: buffer.c
+	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c buffer.c -o buffer.o
 clean:
-	rm startup.o rainbow.elf rainbow.bin rainbow.o rainbow.map vectors.o
+	rm startup.o rainbow.elf rainbow.bin rainbow.o rainbow.map vectors.o buffer.o
 debug:
 	openocd -f /usr/share/openocd/scripts/interface/jlink.cfg -c "transport select swd" -f /usr/share/openocd/scripts/target/at91samdXX.cfg
 flash:
