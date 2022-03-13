@@ -22,6 +22,37 @@
 
 #define LED_PIN ( 10U )
 
+typedef enum
+{
+    colour_red,
+    colour_orange,
+    colour_yellow,
+    colour_green,
+    colour_blue,
+    colour_violet,
+    colour_None,
+} colour_t;
+
+typedef struct
+{
+    colour_t colour;
+    unsigned int code;
+} colour_code_t;
+
+typedef struct
+{
+    unsigned int start;
+    unsigned int colour;
+    unsigned int stop;
+} led_t;
+
+colour_code_t ledColours [3] =
+{
+    {colour_red,    0xFF000087},
+    {colour_green,  0x00FF0087},
+    {colour_red,    0x0000FF87},
+};
+
 /* SysTick ISR */
 void _sysTick( void )
 {
@@ -60,8 +91,16 @@ static void Init( void )
 
 int main ( void )
 {
+    led_t led = 
+    {
+        .start = 0x00000000,
+        .colour = ledColours[2].code,
+        .stop = 0xFFFFFFFF,
+    };
+    unsigned int * raw_led = (unsigned int * )&led;
+
     Init();    
-    Timer_Init();
+    Timer_Init( raw_led, 3 );
 
     /* Endless Loop */
     while(1);

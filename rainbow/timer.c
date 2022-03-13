@@ -33,14 +33,11 @@
 #define NVIC_ISER0      ( *((volatile unsigned int *) 0xE000E100 ) )
 #define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
 
-volatile static unsigned int seq[3] =
-{
-    0x00000000, /* Start Frame */
-    0x0F000F87,
-    0xFFFFFFFF, /* End Frame */
-};
 volatile static unsigned int idx = 0U;
 volatile static unsigned int tcc_count = 0U;
+
+volatile static unsigned int * timerData;
+volatile static unsigned int timerDataLength;
 
 /* tcc2 ISR */
 void _tcc2( void )
@@ -48,7 +45,7 @@ void _tcc2( void )
     if( TCC2_INTFLAG & ( 1 << 16 ))
     {
         unsigned int pin_mask = ( 1 << tcc_count );        
-        if( seq[idx] & pin_mask )
+        if( timerData[idx] & pin_mask )
         {
             PIN |= (1 << 0 );
         }
@@ -63,7 +60,7 @@ void _tcc2( void )
         {
             idx++;
             tcc_count = 0;
-            if( idx == 3 )
+            if( idx == timerDataLength )
             {
                 idx = 0;
                 TCC2 &= ~(1 << 1 );
@@ -92,8 +89,11 @@ static void ConfigureClock( void )
     SET( PM_APBC, 1, 10 );
 }
 
-extern void Timer_Init( void )
+extern void Timer_Init( unsigned int * data, unsigned int len )
 {
+    timerData = data;
+    timerDataLength = len;
+
     ConfigureClock();
 
     /*PA0 = Data In */
