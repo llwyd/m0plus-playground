@@ -5,6 +5,7 @@
 /* ATSAMD21E18 */
 
 #include "../common/util.h"
+#include "timer.h"
 
 /* Registers for GPIO Config */
 #define PORT        ( *( ( volatile unsigned int *)0x41004400 ) )
@@ -60,6 +61,7 @@ static void Init( void )
 int main ( void )
 {
     Init();    
+    Timer_Init();
 
     /* Endless Loop */
     while(1);
