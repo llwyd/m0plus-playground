@@ -64,7 +64,7 @@ static unsigned int ledIndex;
 void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
-    TOG( PIN, 0x1, LED_PIN );
+//    TOG( PIN, 0x1, LED_PIN );
     
     if( !Timer_Active() )
     {
@@ -84,7 +84,7 @@ static void Init( void )
     
     /* set port 10 to output */
     SET( PORT, 1, LED_PIN );
-    SET( PIN, 1, LED_PIN );
+    CLR( PIN, 1, LED_PIN );
 
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
@@ -96,7 +96,7 @@ static void Init( void )
     STK_CALIB = ( 0x1387F );
     
     /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x1387F * 10;
+    STK_LOAD   = 0x1387F * 12;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
