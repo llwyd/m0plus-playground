@@ -17,6 +17,7 @@
 #define TCC2_INTFLAG     ( *( ( volatile unsigned int *)0x4200282C ) )
 #define TCC2_WAVEGEN     ( *( ( volatile unsigned int *)0x4200283C ) )
 #define TCC2_WEXCTRL     ( *( ( volatile unsigned int *)0x42002814 ) )
+#define TCC2_STATUS    ( *( ( volatile unsigned int *)0x42002830 ) )
 
 /* Generic Clock Controller */
 #define GCLK            ( *( ( volatile unsigned int *)0x40000C00 ) )
@@ -72,6 +73,19 @@ void _tcc2( void )
     
     NVIC_ICPR0 |= ( 0x1 << 17 );
 }
+
+
+extern bool Timer_Active( void )
+{
+    bool timerActive = (bool)!( TCC2_STATUS & 0x1 );
+    return timerActive;
+} 
+
+extern void Timer_Start( void )
+{
+    TCC2 |= ( 1 << 1 );
+}
+
 static void ConfigureClock( void )
 {
     /* Use 8MHz oscillator as source for GCLK1, enable generation */
@@ -120,5 +134,5 @@ extern void Timer_Init( unsigned int * data, unsigned int len )
     /* Normal PWM */ 
     SET( TCC2_WAVEGEN, 0x2, 0 );
 
-    TCC2 |= (0x0<<12)| (1<<11) | (0x6 <<8) | ( 1 << 1);
+    TCC2 |= (0x0<<12)| (1<<11) | (0x5 <<8) | ( 1 << 1);
 }

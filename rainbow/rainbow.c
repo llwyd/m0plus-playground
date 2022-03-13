@@ -46,18 +46,35 @@ typedef struct
     unsigned int stop;
 } led_t;
 
-colour_code_t ledColours [3] =
+colour_code_t ledColours [7] =
 {
-    {colour_red,    0xFF000087},
-    {colour_green,  0x00FF0087},
-    {colour_red,    0x0000FF87},
+    {colour_red,        0xFF000087},
+    {colour_orange,     0x3F02c087},
+    {colour_yellow,     0x3FBFc087},
+    {colour_green,      0x00FF0087},
+    {colour_blue,       0x0000FF87},
+    {colour_violet,     0x0F000F87},
+    {colour_None,       0x00000087},
 };
+
+static led_t led;
+static unsigned int ledIndex;
 
 /* SysTick ISR */
 void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
     TOG( PIN, 0x1, LED_PIN );
+    
+    if( !Timer_Active() )
+    {
+        led.colour = ledColours[ledIndex++].code;
+        if( ledIndex == 6 )
+        {
+            ledIndex = 0U;
+        }
+        Timer_Start();
+    }
 }
 
 static void Init( void )
@@ -79,7 +96,7 @@ static void Init( void )
     STK_CALIB = ( 0x1387F );
     
     /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x1387F * 50;
+    STK_LOAD   = 0x1387F * 10;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
@@ -91,12 +108,10 @@ static void Init( void )
 
 int main ( void )
 {
-    led_t led = 
-    {
-        .start = 0x00000000,
-        .colour = ledColours[2].code,
-        .stop = 0xFFFFFFFF,
-    };
+    led.start = 0x00000000;
+    led.colour = ledColours[0].code;
+    led.stop = 0xFFFFFFFF;
+
     unsigned int * raw_led = (unsigned int * )&led;
 
     Init();    

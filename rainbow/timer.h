@@ -5,6 +5,7 @@
 
 extern void Timer_Init( unsigned int * data, unsigned int len );
 extern bool Timer_Active( void );
+extern void Timer_Start( void );
 
 #endif /* __TIMER_H_ */
 
