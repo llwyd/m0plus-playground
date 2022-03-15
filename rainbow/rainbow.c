@@ -33,6 +33,24 @@ typedef enum
     colour_None,
 } colour_t;
 
+typedef enum
+{
+    st_GreenIncrement,
+    st_RedDecrement,
+    st_BlueIncrement,
+    st_GreenDecrement,
+    st_RedIncrement,
+    st_BlueDecrement,
+} colour_state_t;
+
+typedef struct
+{
+    unsigned char global;
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+} rgb_t;
+
 typedef struct
 {
     colour_t colour;
@@ -60,14 +78,60 @@ colour_code_t ledColours [7] =
 static led_t led;
 static unsigned int ledIndex;
 
+
+static colour_state_t rgb_update( unsigned int * colour, colour_state_t state )
+{
+    static rgb_t rgb =
+    {
+        .red = 0xff,
+        .green = 0x00,
+        .blue = 0x00,
+        .global = 0x71,
+    };
+   
+    colour_state_t ret = state;
+
+    switch( state )
+    {
+        case st_GreenIncrement:
+            rgb.green++;
+            ret = ( rgb.green == 0xFF ) ? st_RedDecrement : state;
+            break;
+        case st_RedDecrement:
+            rgb.red--;
+            ret = ( rgb.red == 0x00 ) ? st_BlueIncrement : state;
+            break;
+        case st_BlueIncrement:
+            rgb.blue++;
+            ret = ( rgb.blue == 0xFF ) ? st_GreenDecrement : state;
+            break;
+        case st_GreenDecrement:
+            rgb.green--;
+            ret = ( rgb.green == 0x00 ) ? st_RedIncrement : state;
+            break;
+        case st_RedIncrement:
+            rgb.red++;
+            ret = ( rgb.red == 0xFF ) ? st_GreenIncrement : state;
+            break;
+        case st_BlueDecrement:
+            rgb.green++;
+            ret = ( rgb.green == 0xFF ) ? st_RedDecrement : state;
+            break;
+    }
+
+    return ret;
+}
+
 /* SysTick ISR */
 void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
 //    TOG( PIN, 0x1, LED_PIN );
-    
+    static state = st_GreenIncrement;
+    unsigned int colour; 
     if( !Timer_Active() )
     {
+        state = rgb_update( &colour, state );
         led.colour = ledColours[ledIndex++].code;
         if( ledIndex == 6 )
         {
