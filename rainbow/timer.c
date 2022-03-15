@@ -35,7 +35,7 @@
 #define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
 
 volatile static unsigned int idx = 0U;
-volatile static unsigned int tcc_count = 0U;
+volatile static unsigned int tcc_count = 32U;
 
 volatile static unsigned int * timerData;
 volatile static unsigned int timerDataLength;
@@ -45,7 +45,7 @@ void _tcc2( void )
 {
     if( TCC2_INTFLAG & ( 1 << 16 ))
     {
-        unsigned int pin_mask = ( 1 << tcc_count );        
+        unsigned int pin_mask = ( 1 << ( tcc_count - 1 ) );        
         if( timerData[idx] & pin_mask )
         {
             PIN |= (1 << 0 );
@@ -55,12 +55,12 @@ void _tcc2( void )
             PIN &= ~(1 << 0 );
         }
 
-        tcc_count++;
+        tcc_count--;
 
-        if( tcc_count == 32 )
+        if( tcc_count == 0 )
         {
             idx++;
-            tcc_count = 0;
+            tcc_count = 32;
             if( idx == timerDataLength )
             {
                 idx = 0;

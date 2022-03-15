@@ -45,11 +45,18 @@ typedef enum
 
 typedef struct
 {
-    unsigned char global;
-    unsigned char blue;
-    unsigned char green;
     unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char global;
 } rgb_t;
+
+union rgb_raw_t
+{
+    rgb_t bytes;
+    unsigned int raw;
+};
+
 
 typedef struct
 {
@@ -86,7 +93,7 @@ static colour_state_t rgb_update( unsigned int * colour, colour_state_t state )
         .red = 0xff,
         .green = 0x00,
         .blue = 0x00,
-        .global = 0x71,
+        .global = 0xe1,
     };
    
     colour_state_t ret = state;
@@ -111,14 +118,17 @@ static colour_state_t rgb_update( unsigned int * colour, colour_state_t state )
             break;
         case st_RedIncrement:
             rgb.red++;
-            ret = ( rgb.red == 0xFF ) ? st_GreenIncrement : state;
+            ret = ( rgb.red == 0xFF ) ? st_BlueDecrement : state;
             break;
         case st_BlueDecrement:
-            rgb.green++;
-            ret = ( rgb.green == 0xFF ) ? st_RedDecrement : state;
+            rgb.blue--;
+            ret = ( rgb.blue == 0x00 ) ? st_GreenIncrement : state;
             break;
     }
 
+    union rgb_raw_t raw;
+    raw.bytes = rgb;
+    *colour = raw.raw;
     return ret;
 }
 
@@ -127,12 +137,12 @@ void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
 //    TOG( PIN, 0x1, LED_PIN );
-    static state = st_GreenIncrement;
+    static colour_state_t state = st_GreenIncrement;
     unsigned int colour; 
     if( !Timer_Active() )
     {
         state = rgb_update( &colour, state );
-        led.colour = ledColours[ledIndex++].code;
+        led.colour = colour;
         if( ledIndex == 6 )
         {
             ledIndex = 0U;
@@ -159,8 +169,8 @@ static void Init( void )
      */
     STK_CALIB = ( 0x1387F );
     
-    /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x1387F * 12;
+    /* Made this timer faster than 10ms to make the colour transitions smoother */
+    STK_LOAD   = 0x1387F >> 3;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
