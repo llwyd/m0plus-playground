@@ -40,6 +40,44 @@ volatile static unsigned int tcc_count = 32U;
 volatile static unsigned int * timerData;
 volatile static unsigned int timerDataLength;
 
+typedef struct
+{
+    bool pin0:1;
+    bool pin1:1;
+    bool pin2:1;
+    bool pin3:1;
+    bool pin4:1;
+    bool pin5:1;
+    bool pin6:1;
+    bool pin7:1;
+    bool pin8:1;
+    bool pin9:1;
+    bool pin10:1;
+    bool pin11:1;
+    bool pin12:1;
+    bool pin13:1;
+    bool pin14:1;
+    bool pin15:1;
+    bool pin16:1;
+    bool pin17:1;
+    bool pin18:1;
+    bool pin19:1;
+    bool pin20:1;
+    bool pin21:1;
+    bool pin22:1;
+    bool pin23:1;
+    bool pin24:1;
+    bool pin25:1;
+    bool pin26:1;
+    bool pin27:1;
+    bool pin28:1;
+    bool pin29:1;
+    bool pin30:1;
+    bool pin31:1;
+} gpio_pin_t;
+
+#define GPIO_PIN ( *( ( volatile gpio_pin_t *) 0x41004410 ) )
+
 /* tcc2 ISR */
 void _tcc2( void )
 {
@@ -48,11 +86,11 @@ void _tcc2( void )
         unsigned int pin_mask = ( 1 << ( tcc_count - 1 ) );        
         if( timerData[idx] & pin_mask )
         {
-            PIN |= (1 << 0 );
+            GPIO_PIN.pin0 = 1;
         }
         else
         {
-            PIN &= ~(1 << 0 );
+            GPIO_PIN.pin0 = 0;
         }
 
         tcc_count--;
