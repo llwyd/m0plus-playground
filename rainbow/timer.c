@@ -83,15 +83,9 @@ void _tcc2( void )
 {
     if( TCC2_INTFLAG & ( 1 << 16 ))
     {
-        unsigned int pin_mask = ( 1 << ( tcc_count - 1 ) );        
-        if( timerData[idx] & pin_mask )
-        {
-            GPIO_PIN.pin0 = 1;
-        }
-        else
-        {
-            GPIO_PIN.pin0 = 0;
-        }
+        bool pinStatus = ( timerData[idx] >> ( tcc_count - 1 ) );
+        pinStatus &= 0x1;
+        GPIO_PIN.pin0 = pinStatus;
 
         tcc_count--;
 
