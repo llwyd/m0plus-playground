@@ -5,6 +5,7 @@
 /* ATSAMD21E18 */
 
 #include "../common/util.h"
+#include "../common/buffer.h"
 #include "timer.h"
 
 /* Registers for GPIO Config */
@@ -21,17 +22,6 @@
 #define SYSCTRL_8MHZ ( *( ( volatile unsigned int *)0x40000820 ) )
 
 #define LED_PIN ( 10U )
-
-typedef enum
-{
-    colour_red,
-    colour_orange,
-    colour_yellow,
-    colour_green,
-    colour_blue,
-    colour_violet,
-    colour_None,
-} colour_t;
 
 typedef enum
 {
@@ -57,13 +47,6 @@ union rgb_raw_t
     unsigned int raw;
 };
 
-
-typedef struct
-{
-    colour_t colour;
-    unsigned int code;
-} colour_code_t;
-
 typedef struct
 {
     unsigned int start;
@@ -71,20 +54,7 @@ typedef struct
     unsigned int stop;
 } led_t;
 
-colour_code_t ledColours [7] =
-{
-    {colour_red,        0xFF000087},
-    {colour_orange,     0x3F02c087},
-    {colour_yellow,     0x3FBFc087},
-    {colour_green,      0x00FF0087},
-    {colour_blue,       0x0000FF87},
-    {colour_violet,     0x0F000F87},
-    {colour_None,       0x00000087},
-};
-
 static led_t led;
-static unsigned int ledIndex;
-
 
 static colour_state_t rgb_update( unsigned int * colour, colour_state_t state )
 {
@@ -132,23 +102,23 @@ static colour_state_t rgb_update( unsigned int * colour, colour_state_t state )
     return ret;
 }
 
+void UpdateLed( void )
+{
+    static colour_state_t state = st_GreenIncrement;
+    unsigned int colour; 
+    state = rgb_update( &colour, state );
+    
+    led.colour = colour;
+    Timer_Start();
+    
+    /* Wait for transaction to complete */
+    while( Timer_Active() );
+}
+
 /* SysTick ISR */
 void _sysTick( void )
 {
-    /* XOR Toggle of On-board LED */
-//    TOG( PIN, 0x1, LED_PIN );
-    static colour_state_t state = st_GreenIncrement;
-    unsigned int colour; 
-    if( !Timer_Active() )
-    {
-        state = rgb_update( &colour, state );
-        led.colour = colour;
-        if( ledIndex == 6 )
-        {
-            ledIndex = 0U;
-        }
-        Timer_Start();
-    }
+    Task_Add( &UpdateLed );
 }
 
 static void Init( void )
@@ -170,7 +140,7 @@ static void Init( void )
     STK_CALIB = ( 0x1387F );
     
     /* Made this timer faster than 10ms to make the colour transitions smoother */
-    STK_LOAD   = 0x1387F >> 3;
+    STK_LOAD   = 0x1387F >> 7;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
@@ -183,16 +153,18 @@ static void Init( void )
 int main ( void )
 {
     led.start = 0x00000000;
-    led.colour = ledColours[0].code;
+    led.colour = 0xe10000ff;
     led.stop = 0xFFFFFFFF;
 
     unsigned int * raw_led = (unsigned int * )&led;
 
     Init();    
     Timer_Init( raw_led, 3 );
-
     /* Endless Loop */
-    while(1);
+    while(1)
+    {
+        Task_Get();
+    }
     return 0;
 }
 

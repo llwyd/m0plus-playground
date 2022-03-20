@@ -166,5 +166,5 @@ extern void Timer_Init( unsigned int * data, unsigned int len )
     /* Normal PWM */ 
     SET( TCC2_WAVEGEN, 0x2, 0 );
 
-    TCC2 |= (0x0<<12)| (1<<11) | (0x5 <<8) | ( 1 << 1);
+    TCC2 |= (0x0<<12)| (1<<11) | (0x5 <<8);
 }
