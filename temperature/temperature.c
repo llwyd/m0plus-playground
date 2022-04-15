@@ -193,20 +193,24 @@ void Read( void )
    
     /* Send ACK after each data read */ 
     SERCOM->CTRLB &= ~( 0x1 << 18 );
-    while( ( SERCOM->STATUS & ( 1 << 2 ) ) );
 
     /* Send Address */
     SERCOM->ADDR = ( ( address << 1 ) | 0x1);
     while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
-    while( !( SERCOM->STATUS & ( 1 << 7 ) ) );
-    
+    while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
+   
+    /* Read byte and sync */ 
     data[0] = SERCOM->DATA;
+    while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
+    while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
     
     /* Send NACK after final byte */
     SERCOM->CTRLB |= ( 0x1 << 18 );
-    while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
-    while( !( SERCOM->STATUS & ( 1 << 7 ) ) );
+    while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
+    
     data[1] = SERCOM->DATA;
+    while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
+    while( ( SERCOM->INTFLAG & ( 1 << 1 ) ) );
    
     GPIO->OUT ^= ( 1 << LED_PIN );
     
