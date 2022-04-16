@@ -19,11 +19,15 @@
 
 #define LED_PIN ( 10U )
 
+volatile unsigned char data[2];
+
 /* SysTick ISR */
 void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
+    I2C_Read( 0x48, data, 2 );
     PIN ^= ( 1 << LED_PIN );
+
 }
 
 int main ( void )

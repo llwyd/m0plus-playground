@@ -10,7 +10,7 @@ vectors.o: ../common/vectors.s
 display.o: display.c
 	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c display.c -o display.o
 i2c.o: ../common/i2c.c
-	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/i2c.c -o i2c.o
+	arm-none-eabi-gcc  -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/i2c.c -o i2c.o
 clean:
 	rm startup.o display.elf display.bin display.o display.map vectors.o i2c.o
 debug:
