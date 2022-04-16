@@ -171,7 +171,8 @@ void Init( void )
     SERCOM->CTRLB |= ( 0x1 << 8U );
 
     /* Bus timeout time */
-    SERCOM->CTRLA |= ( 0x3 << 28U);
+    //SERCOM->CTRLA |= ( 0x3 << 28U);
+    SERCOM->CTRLA |= ( 0x1 << 30U ) | ( 0x1 << 22 );
 
     /* Baud */
     SERCOM->BAUD |= ( 0x4 << 0U );
@@ -205,8 +206,8 @@ void Read( void )
     while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
     
     /* Send NACK after final byte */
-    SERCOM->CTRLB |= ( 0x1 << 18 );
-    while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
+    //SERCOM->CTRLB |= ( 0x1 << 18 );
+    //while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
     
     data[1] = SERCOM->DATA;
     while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
