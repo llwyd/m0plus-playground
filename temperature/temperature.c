@@ -205,16 +205,16 @@ void Read( void )
     while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
     while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
     
-    /* Send NACK after final byte */
-    //SERCOM->CTRLB |= ( 0x1 << 18 );
-    //while( !( SERCOM->INTFLAG & ( 1 << 1 ) ) );
-    
     data[1] = SERCOM->DATA;
     while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
     while( ( SERCOM->INTFLAG & ( 1 << 1 ) ) );
-   
+  
+    /* Stop Condition */
+    SERCOM->CTRLB |= ( 0x3 << 16 );
+    while( ( SERCOM->SYNCBUSY & ( 1 << 2 ) ) );
+
+    /* Just here so I can set a breakpoint */
     GPIO->OUT ^= ( 1 << LED_PIN );
-    
 }
 
 int main ( void )
