@@ -6,6 +6,7 @@
 
 #include "../common/util.h"
 #include "../common/i2c.h"
+#include <stdarg.h>
 
 /* Registers for GPIO Config */
 #define PORT        ( *( ( volatile unsigned int *)0x41004400 ) )
@@ -30,6 +31,43 @@ void _sysTick( void )
 
 }
 
+
+void SetupDisplay( int num, ... )
+{
+    uint8_t commands[4];
+    va_list args;
+
+    va_start( args, num );
+
+    for( uint8_t idx = 0U; idx < num; idx++ )
+    {
+        commands[idx] = (uint8_t)va_arg( args, int );
+    }
+
+    va_end( args );
+
+    I2C_Write( 0x3C, commands, num );
+}
+
+void Init( void )
+{
+    SetupDisplay( 2U, 0x00, 0xAE );
+    SetupDisplay( 3U, 0x00, 0x81, 0x7F );
+    SetupDisplay( 3U, 0x00, 0xA8, 63 );
+    SetupDisplay( 3U, 0x00, 0xD3, 0x00 );
+    SetupDisplay( 2U, 0x00, 0x40 );
+    SetupDisplay( 3U , 0x00, 0xda, 0x02 | ( 1 << 4 ) | ( 0 << 5 ) );
+    SetupDisplay( 2U, 0x00, 0xc0 | ( 1 << 3 ) );
+    SetupDisplay( 2U, 0x00, 0xA6 );
+    SetupDisplay( 3U, 0x00, 0xD5, ( 15 << 4 | 0x00 ) );
+    SetupDisplay( 3U, 0x00, 0x8D, 0x14 );
+    SetupDisplay( 2U, 0x00, 0xA4 );
+    SetupDisplay( 2U, 0x00, 0xAF );
+    SetupDisplay( 3U, 0x00, 0x20, 0 );
+    SetupDisplay( 4U, 0x00, 0x21, 0, 127);
+    SetupDisplay( 4U, 0x00, 0x22, 0, 7);
+}
+
 int main ( void )
 {
     /* set port 10 to output */
@@ -37,7 +75,7 @@ int main ( void )
     PIN |= ( 1 << LED_PIN );
 
     I2C_Init();
-
+    Init();
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
 
