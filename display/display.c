@@ -88,6 +88,7 @@ void Init( void )
     SetupDisplay( 3U, 0x00, 0xA8, 63 );
     SetupDisplay( 3U, 0x00, 0xD3, 0x00 );
     SetupDisplay( 2U, 0x00, 0x40 );
+    SetupDisplay( 2U, 0x00, 0xa0 | 0x1 );
     SetupDisplay( 3U , 0x00, 0xda, 0x02 | ( 1 << 4 ) | ( 0 << 5 ) );
     SetupDisplay( 2U, 0x00, 0xc0 | ( 1 << 3 ) );
     SetupDisplay( 2U, 0x00, 0xA6 );
