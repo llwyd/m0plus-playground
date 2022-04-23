@@ -20,13 +20,13 @@
 
 #define LED_PIN ( 10U )
 
-volatile unsigned char data[2];
+volatile unsigned char temperature[2];
 
 /* SysTick ISR */
 void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
-    I2C_Read( 0x48, data, 2 );
+    I2C_Read( 0x48, temperature, 2 );
     PIN ^= ( 1 << LED_PIN );
 
 }
@@ -47,6 +47,26 @@ void SetupDisplay( int num, ... )
     va_end( args );
 
     I2C_Write( 0x3C, commands, num );
+}
+
+void FillDisplay( void )
+{
+    uint8_t data[2] = { 0x40, 0xFF };
+
+    for( uint16_t i = 0U; i < 1024; i++ )
+    {
+        I2C_Write( 0x3C, data, 2U );
+    }
+}
+
+void ClearDisplay( void )
+{
+    uint8_t data[2] = { 0x40, 0x00 };
+
+    for( uint16_t i = 0U; i < 1024; i++ )
+    {
+        I2C_Write( 0x3C, data, 2U );
+    }
 }
 
 void Init( void )
@@ -76,6 +96,7 @@ int main ( void )
 
     I2C_Init();
     Init();
+    ClearDisplay();
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
 
