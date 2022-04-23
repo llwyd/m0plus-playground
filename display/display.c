@@ -28,7 +28,7 @@ void _sysTick( void )
     /* XOR Toggle of On-board LED */
     I2C_Read( 0x48, temperature, 2 );
     PIN ^= ( 1 << LED_PIN );
-
+    ToggDisplay();
 }
 
 
@@ -69,6 +69,18 @@ void ClearDisplay( void )
     }
 }
 
+void ToggDisplay( void )
+{
+    static uint8_t data[2] = { 0x40, 0xFF };
+
+    for( uint16_t i = 0U; i < 1024; i++ )
+    {
+        I2C_Write( 0x3C, data, 2U );
+    }
+
+    data[1] ^= 0xFF;
+}
+
 void Init( void )
 {
     SetupDisplay( 2U, 0x00, 0xAE );
@@ -96,7 +108,7 @@ int main ( void )
 
     I2C_Init();
     Init();
-    ClearDisplay();
+    ToggDisplay();
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
 
