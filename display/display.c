@@ -18,6 +18,9 @@
 #define STK_VAL     ( *( ( volatile unsigned int *)0xE000E018 ) )
 #define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
 
+/* SysCtrl */
+#define SYSCTRL_8MHZ ( *( ( volatile unsigned int *)0x40000820 ) )
+
 #define LED_PIN ( 10U )
 
 volatile unsigned char temperature[2];
@@ -103,6 +106,9 @@ void Init( void )
 
 int main ( void )
 {
+    /* 8Mhz Clock */
+    CLR( SYSCTRL_8MHZ, 0x3, 8U );
+    
     /* set port 10 to output */
     PORT |= ( 1 << LED_PIN );
     PIN |= ( 1 << LED_PIN );
@@ -121,7 +127,7 @@ int main ( void )
     STK_CALIB = ( 0x270F );
     
     /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x270F * 50;
+    STK_LOAD   = 0x270F * 50 * 8;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
