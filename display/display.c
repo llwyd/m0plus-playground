@@ -46,7 +46,7 @@ void SetupDisplay( int num, ... )
 
     va_end( args );
 
-    I2C_Write( 0x3C, commands, num );
+    while( !I2C_Write( 0x3C, commands, num ) );
 }
 
 void FillDisplay( void )
