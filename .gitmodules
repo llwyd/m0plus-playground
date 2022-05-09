@@ -1,0 +1,3 @@
+[submodule "conway"]
+	path = conway
+	url = git@github.com:llwyd/conway.git
