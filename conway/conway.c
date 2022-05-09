@@ -5,6 +5,8 @@
 /* ATSAMD21E18 */
 
 #include "../common/util.h"
+#include "../common/buffer.h"
+#include "../common/clock.h"
 #include "../common/i2c.h"
 #include "../../../conway/life/life.h"
 #include <stdarg.h>
@@ -19,9 +21,6 @@
 #define STK_VAL     ( *( ( volatile unsigned int *)0xE000E018 ) )
 #define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
 
-/* SysCtrl */
-#define SYSCTRL_8MHZ ( *( ( volatile unsigned int *)0x40000820 ) )
-
 #define LED_PIN ( 10U )
 
 void TickAndUpdate();
@@ -29,9 +28,15 @@ void TickAndUpdate();
 /* SysTick ISR */
 void _sysTick( void )
 {
+    static uint16_t counter;
+    counter++;
+    if ( counter == 250 )
+    {
     /* XOR Toggle of On-board LED */
-    PIN ^= ( 1 << LED_PIN );
-    TickAndUpdate();
+        PIN ^= ( 1 << LED_PIN );
+        counter = 0U;
+    }
+    Task_Add( &TickAndUpdate );
 }
 
 
@@ -127,12 +132,13 @@ void Init( void )
 
 int main ( void )
 {
-    /* 8Mhz Clock */
-    CLR( SYSCTRL_8MHZ, 0x3, 8U );
-    
+    Clock_Set48MHz();
+
+
     /* set port 10 to output */
     PORT |= ( 1 << LED_PIN );
     PIN |= ( 1 << LED_PIN );
+    
 
     I2C_Init();
     Init();
@@ -143,14 +149,14 @@ int main ( void )
     STK_VAL = 0x0;
 
     /* SysTick Calibration value for 10ms tick as per ARM datasheet
-     * 1MHz Clock / 100Hz tick = 0x2710
+     * 48MHz Clock / 100Hz tick = 0x75300
      * Need to subtract 1 because count ends at 0 so
-     * Calibration value is 0x270F
+     * Calibration value is 0x752FF
      */
-    STK_CALIB = ( 0x270F );
+    STK_CALIB = ( 0x752FF );
     
-    /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x270F * 50 * 8;
+    /* 1ms Blink is previous value / 10 */
+    STK_LOAD   = 0x752ff / 10;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
@@ -160,7 +166,10 @@ int main ( void )
     asm("CPSIE IF");
 
     /* Endless Loop */
-    while(1);
+    while(1)
+    {
+        Task_Get();
+    }
 
     return 0;
 }
