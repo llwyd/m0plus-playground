@@ -30,13 +30,13 @@ void _sysTick( void )
 {
     static uint16_t counter;
     counter++;
-    if ( counter == 250 )
+    if ( counter == 25 )
     {
     /* XOR Toggle of On-board LED */
         PIN ^= ( 1 << LED_PIN );
         counter = 0U;
     }
-    Task_Add( &TickAndUpdate );
+    Task_Add( &Life_Tick );
 }
 
 
@@ -70,12 +70,6 @@ void UpdateDisplay( void )
             I2C_Write( 0x3C, data, 2U );
         }
     }
-}
-
-void TickAndUpdate( void )
-{
-    Life_Tick();
-    UpdateDisplay();
 }
 
 void FillDisplay( void )
@@ -142,8 +136,7 @@ int main ( void )
 
     I2C_Init();
     Init();
-    Life_Init();
-    UpdateDisplay(); 
+    Life_Init( &UpdateDisplay );
 
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
@@ -156,7 +149,7 @@ int main ( void )
     STK_CALIB = ( 0x752FF );
     
     /* 1ms Blink is previous value / 10 */
-    STK_LOAD   = 0x752ff / 10;
+    STK_LOAD   = 0x752ff;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
