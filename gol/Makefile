@@ -8,15 +8,15 @@ startup.o: ../common/startup.s
 vectors.o: ../common/vectors.s
 	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb  ../common/vectors.s -o vectors.o
 conway.o: conway.c
-	arm-none-eabi-gcc -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
+	arm-none-eabi-gcc -std=gnu99 -O3 -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
 life.o: ../../../conway/life/life.c
-	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../../../conway/life/life.c -o life.o -ffreestanding
+	arm-none-eabi-gcc -std=gnu99 -O3 -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../../../conway/life/life.c -o life.o -ffreestanding
 buffer.o: ../common/buffer.c
-	arm-none-eabi-gcc  -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/buffer.c -o buffer.o
+	arm-none-eabi-gcc -std=gnu99 -O3 -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/buffer.c -o buffer.o
 i2c.o: ../common/i2c.c
-	arm-none-eabi-gcc  -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/i2c.c -o i2c.o
+	arm-none-eabi-gcc -std=gnu99 -O3 -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/i2c.c -o i2c.o
 clock.o: ../common/clock.c
-	arm-none-eabi-gcc  -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/clock.c -o clock.o
+	arm-none-eabi-gcc -std=gnu99 -O3 -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/clock.c -o clock.o
 clean:
 	rm startup.o conway.elf conway.bin conway.o conway.map vectors.o i2c.o life.o clock.o buffer.o
 debug:
