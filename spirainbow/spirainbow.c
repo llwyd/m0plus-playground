@@ -4,6 +4,8 @@
 
 /* ATSAMD21E18 */
 
+#include "../common/util.h"
+#include "../common/spi.h"
 
 /* Registers for GPIO Config */
 #define PORT        ( *( ( volatile unsigned int *)0x41004400 ) )
@@ -29,7 +31,9 @@ int main ( void )
     /* set port 10 to output */
     PORT |= ( 1 << LED_PIN );
     PIN |= ( 1 << LED_PIN );
- 
+
+    SPI_Init();
+    SPI_Write();
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
 
