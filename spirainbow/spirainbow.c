@@ -17,6 +17,9 @@
 #define STK_VAL     ( *( ( volatile unsigned int *)0xE000E018 ) )
 #define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
 
+/* SysCtrl */
+#define SYSCTRL_8MHZ ( *( ( volatile unsigned int *)0x40000820 ) )
+
 #define LED_PIN ( 10U )
 
 /* SysTick ISR */
@@ -28,6 +31,9 @@ void _sysTick( void )
 
 int main ( void )
 {
+    /* 8Mhz Clock */
+    CLR( SYSCTRL_8MHZ, 0x3, 8U );
+    
     /* set port 10 to output */
     PORT |= ( 1 << LED_PIN );
     PIN |= ( 1 << LED_PIN );
