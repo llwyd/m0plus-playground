@@ -8,7 +8,7 @@ startup.o: ../common/startup.s
 vectors.o: ../common/vectors.s
 	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb  ../common/vectors.s -o vectors.o
 input.o: input.c
-	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c input.c -o input.o
+	arm-none-eabi-gcc  -Wall  -g -nostdlib -nostartfiles -I../common -mcpu=cortex-m0plus -mthumb -c input.c -o input.o
 clean:
 	rm startup.o input.elf input.bin input.o input.map vectors.o
 debug:

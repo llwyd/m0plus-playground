@@ -3,11 +3,8 @@
  * */
 
 /* ATSAMD21E18 */
-
-
-/* Registers for GPIO Config */
-#define PORT        ( *( ( volatile unsigned int *)0x41004400 ) )
-#define PIN         ( *( ( volatile unsigned int *)0x41004410 ) )
+#include "../common/util.h"
+#include "../common/gpio.h"
 
 /* SysTick registers */
 #define STK_CTRL    ( *( ( volatile unsigned int *)0xE000E010 ) )
@@ -17,23 +14,26 @@
 
 #define LED_PIN ( 10U )
 
+static gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
+static eic_t * EIC   = ( eic_t *) EIC_BASE;
+
 void _eic( void )
 {
-    PIN |= ( 1 << LED_PIN );
+    GPIO->OUT |= ( 1 << LED_PIN );
 }
 
 /* SysTick ISR */
 void _sysTick( void )
 {
     /* XOR Toggle of On-board LED */
-    PIN ^= ( 1 << LED_PIN );
+    GPIO->OUT ^= ( 1 << LED_PIN );
 }
 
 int main ( void )
 {
     /* set port 10 to output */
-    PORT |= ( 1 << LED_PIN );
-    PIN |= ( 1 << LED_PIN );
+    GPIO->DIRR |= ( 1 << LED_PIN );
+    GPIO->OUT |= ( 1 << LED_PIN );
  
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
