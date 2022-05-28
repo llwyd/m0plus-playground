@@ -13,6 +13,7 @@
 #define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
 
 #define LED_PIN ( 10U )
+#define INPUT_PIN ( 7U )
 
 static gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
 static eic_t * EIC   = ( eic_t *) EIC_BASE;
@@ -25,16 +26,38 @@ void _eic( void )
 /* SysTick ISR */
 void _sysTick( void )
 {
-    /* XOR Toggle of On-board LED */
-    GPIO->OUT ^= ( 1 << LED_PIN );
+    if( ( GPIO->IN & ( 1 << INPUT_PIN ) ) )
+    {
+        GPIO->OUT &= ~( 1 << LED_PIN );
+    }
+    else
+    {
+        GPIO->OUT |= ( 1 << LED_PIN );
+    }
+}
+
+void ConfigureInput( void )
+{
+    /* PA 7 as input switch, pulled up internally, switch connected to GND */
+
+    /* DIR defaults to input */
+    GPIO->OUT |= ( 1 << INPUT_PIN );
+
+    /* Set pullup */
+    GPIO->PINCFG7 |= ( 1  << 2U );
+
+    /* Input enable */
+    GPIO->PINCFG7 |= ( 1 << 1U );
 }
 
 int main ( void )
 {
     /* set port 10 to output */
     GPIO->DIRR |= ( 1 << LED_PIN );
-    GPIO->OUT |= ( 1 << LED_PIN );
- 
+    GPIO->OUT &= ~( 1 << LED_PIN );
+
+    ConfigureInput();
+
     /* Reset SysTick Counter and COUNTFLAG */
     STK_VAL = 0x0;
 
@@ -46,7 +69,7 @@ int main ( void )
     STK_CALIB = ( 0x270F );
     
     /* 500ms Blink is previous value * 50 */
-    STK_LOAD   = 0x270F * 50;
+    STK_LOAD   = 0x270F * 5;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
