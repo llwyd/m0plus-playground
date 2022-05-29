@@ -5,6 +5,7 @@
 /* ATSAMD21E18 */
 #include "../common/util.h"
 #include "../common/gpio.h"
+#include "../common/clock.h"
 
 /* SysTick registers */
 #define STK_CTRL    ( *( ( volatile unsigned int *)0xE000E010 ) )
@@ -25,12 +26,11 @@ static gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
 static eic_t * EIC   = ( eic_t *) EIC_BASE;
 
 void _eic( void )
-{
-    
+{    
     GPIO->OUT ^= ( 1 << LED_PIN );
 
-    EIC->INTFLAG |= ( 1 << INPUT_PIN );    
     NVIC_ICPR0 |= ( 0x1 << 4 );
+    EIC->INTFLAG |= ( 1 << INPUT_PIN );    
 }
 
 /* SysTick ISR */
@@ -43,17 +43,20 @@ void ConfigureEIC( void )
     /* Enable in PM */
     PM_APBA |= ( 1 << 6U );
 
+    /* Enable GCLK */
+    Clock_ConfigureGCLK( 3U, 0x5 );
+    Clock_Divide( 3U, 0xF );
+
     /* Configure */
     EIC->EVCTRL |= ( 1 << INPUT_PIN );
-    EIC->CONFIG0 |= ( 0x5 << 28 );
+    EIC->INTENSET |= ( 1 << INPUT_PIN );
+
+    EIC->CONFIG0 |= ( 1 << 31U );
+    EIC->CONFIG0 |= ( 0x2 << 28 );   
 
     /* Enable EIC */
     EIC->CTRL |= ( 1 << 1U );
     WAITCLR( EIC->STATUS, 7U );
-
-    /* Errata 1.9.1 */
-    EIC->INTFLAG |= ( 1 << INPUT_PIN );
-    EIC->INTENSET |= ( 1 << INPUT_PIN );
 
     NVIC_ISER0 |= ( 1 << 4 );
 }
@@ -70,6 +73,9 @@ void ConfigureInput( void )
 
     /* Input enable */
     GPIO->PINCFG7 |= ( 1 << 1U );
+
+    /* Enable MUX  for EIC */
+    GPIO->PINCFG7 |= ( 1 << 0U );
 }
 
 int main ( void )
