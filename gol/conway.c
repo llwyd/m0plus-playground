@@ -8,6 +8,7 @@
 #include "../common/buffer.h"
 #include "../common/clock.h"
 #include "../common/i2c.h"
+#include "../common/gpio.h"
 #include "../../../conway/life/life.h"
 #include <stdarg.h>
 
@@ -21,9 +22,17 @@
 #define STK_VAL     ( *( ( volatile unsigned int *)0xE000E018 ) )
 #define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
 
-#define LED_PIN ( 10U )
+#define PM_APBA     ( *( ( volatile unsigned int *)0x40000418 ) )
 
-void TickAndUpdate();
+/* NVIC */
+#define NVIC_ISER0      ( *((volatile unsigned int *) 0xE000E100 ) )
+#define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
+
+#define LED_PIN ( 10U )
+#define INPUT_PIN ( 7U )
+
+static volatile gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
+static volatile eic_t * EIC   = ( eic_t *) EIC_BASE;
 
 /* SysTick ISR */
 void _sysTick( void )
@@ -39,6 +48,13 @@ void _sysTick( void )
     Task_Add( &Life_Tick );
 }
 
+void _eic( void )
+{    
+    GPIO->OUT ^= ( 1 << LED_PIN );
+
+    NVIC_ICPR0 |= ( 0x1 << 4 );
+    EIC->INTFLAG |= ( 1 << INPUT_PIN );    
+}
 
 void SetupDisplay( int num, ... )
 {
@@ -72,16 +88,6 @@ void UpdateDisplay( void )
     }
 }
 
-void FillDisplay( void )
-{
-    uint8_t data[2] = { 0x40, 0xFF };
-
-    for( uint16_t i = 0U; i < 1024; i++ )
-    {
-        I2C_Write( 0x3C, data, 2U );
-    }
-}
-
 void ClearDisplay( void )
 {
     uint8_t data[2] = { 0x40, 0x00 };
@@ -92,19 +98,7 @@ void ClearDisplay( void )
     }
 }
 
-void ToggDisplay( void )
-{
-    static uint8_t data[2] = { 0x40, 0xFF };
-
-    for( uint16_t i = 0U; i < 1024; i++ )
-    {
-        I2C_Write( 0x3C, data, 2U );
-    }
-
-    data[1] ^= 0xFF;
-}
-
-void Init( void )
+void DisplayInit( void )
 {
     SetupDisplay( 2U, 0x00, 0xAE );
     SetupDisplay( 3U, 0x00, 0x81, 0x7F );
@@ -124,18 +118,54 @@ void Init( void )
     SetupDisplay( 4U, 0x00, 0x22, 0, 7);
 }
 
+void InputInit( void )
+{
+    /* PA 7 as input switch, pulled up internally, switch connected to GND */
+    /* DIR defaults to input */
+    GPIO->OUT |= ( 1 << INPUT_PIN );
+
+    /* Set pullup */
+    GPIO->PINCFG7 |= ( 1  << 2U );
+
+    /* Input enable */
+    GPIO->PINCFG7 |= ( 1 << 1U );
+
+    /* Enable MUX  for EIC */
+    GPIO->PINCFG7 |= ( 1 << 0U );
+
+    /* Enable in PM */
+    PM_APBA |= ( 1 << 6U );
+
+    /* Enable GCLK */
+    Clock_ConfigureGCLK( 7U, 3U, 0x5 );
+    Clock_Divide( 3U, 0xF );
+
+    /* Configure */
+    EIC->EVCTRL |= ( 1 << INPUT_PIN );
+    EIC->INTENSET |= ( 1 << INPUT_PIN );
+
+    EIC->CONFIG0 |= ( 1 << 31U );
+    EIC->CONFIG0 |= ( 0x2 << 28 );   
+
+    /* Enable EIC */
+    EIC->CTRL |= ( 1 << 1U );
+    WAITCLR( EIC->STATUS, 7U );
+
+    NVIC_ISER0 |= ( 1 << 4 );
+}
+
 int main ( void )
 {
     Clock_Set48MHz();
 
-
     /* set port 10 to output */
     PORT |= ( 1 << LED_PIN );
     PIN |= ( 1 << LED_PIN );
-    
 
     I2C_Init();
-    Init();
+    DisplayInit();
+    InputInit();
+
     Life_Init( &UpdateDisplay );
 
     /* Reset SysTick Counter and COUNTFLAG */
