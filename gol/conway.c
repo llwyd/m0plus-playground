@@ -172,14 +172,14 @@ int main ( void )
     STK_VAL = 0x0;
 
     /* SysTick Calibration value for 10ms tick as per ARM datasheet
-     * 48MHz Clock / 100Hz tick = 0x75300
+     * 48MHz Clock / 1000Hz tick = 0xBB80
      * Need to subtract 1 because count ends at 0 so
-     * Calibration value is 0x752FF
+     * Calibration value is 0x7527F
      */
-    STK_CALIB = ( 0x752FF );
+    STK_CALIB = ( 0xBB7F );
     
-    /* 1ms Blink is previous value / 10 */
-    STK_LOAD   = 0x752ff;
+    /* 1000 / 24fps = 42ish */
+    STK_LOAD   = 0xBB7f * 42;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
