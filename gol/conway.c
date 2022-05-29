@@ -50,7 +50,7 @@ void _sysTick( void )
 
 void _eic( void )
 {    
-    GPIO->OUT ^= ( 1 << LED_PIN );
+    Task_Add( &Life_Seed );
 
     NVIC_ICPR0 |= ( 0x1 << 4 );
     EIC->INTFLAG |= ( 1 << INPUT_PIN );    
