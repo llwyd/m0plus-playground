@@ -12,6 +12,12 @@
 #define STK_VAL     ( *( ( volatile unsigned int *)0xE000E018 ) )
 #define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
 
+#define PM_APBA     ( *( ( volatile unsigned int *)0x40000418 ) )
+
+/* NVIC */
+#define NVIC_ISER0      ( *((volatile unsigned int *) 0xE000E100 ) )
+#define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
+
 #define LED_PIN ( 10U )
 #define INPUT_PIN ( 7U )
 
@@ -20,20 +26,36 @@ static eic_t * EIC   = ( eic_t *) EIC_BASE;
 
 void _eic( void )
 {
-    GPIO->OUT |= ( 1 << LED_PIN );
+    
+    GPIO->OUT ^= ( 1 << LED_PIN );
+
+    EIC->INTFLAG |= ( 1 << INPUT_PIN );    
+    NVIC_ICPR0 |= ( 0x1 << 4 );
 }
 
 /* SysTick ISR */
 void _sysTick( void )
 {
-    if( ( GPIO->IN & ( 1 << INPUT_PIN ) ) )
-    {
-        GPIO->OUT &= ~( 1 << LED_PIN );
-    }
-    else
-    {
-        GPIO->OUT |= ( 1 << LED_PIN );
-    }
+}
+
+void ConfigureEIC( void )
+{
+    /* Enable in PM */
+    PM_APBA |= ( 1 << 6U );
+
+    /* Configure */
+    EIC->EVCTRL |= ( 1 << INPUT_PIN );
+    EIC->CONFIG0 |= ( 0x5 << 28 );
+
+    /* Enable EIC */
+    EIC->CTRL |= ( 1 << 1U );
+    WAITCLR( EIC->STATUS, 7U );
+
+    /* Errata 1.9.1 */
+    EIC->INTFLAG |= ( 1 << INPUT_PIN );
+    EIC->INTENSET |= ( 1 << INPUT_PIN );
+
+    NVIC_ISER0 |= ( 1 << 4 );
 }
 
 void ConfigureInput( void )
@@ -73,9 +95,10 @@ int main ( void )
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
-    STK_CTRL |= 0x7;
+    //STK_CTRL |= 0x7;
 
     /* Globally Enable Interrupts */
+    ConfigureEIC();
     asm("CPSIE IF");
 
     /* Endless Loop */
