@@ -49,7 +49,8 @@ void _sysTick( void )
 }
 
 void _eic( void )
-{    
+{   
+    Task_Flush(); 
     Task_Add( &Life_Seed );
 
     NVIC_ICPR0 |= ( 0x1 << 4 );
