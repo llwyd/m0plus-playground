@@ -9,6 +9,7 @@
 #include "../common/clock.h"
 #include "../common/i2c.h"
 #include "../common/gpio.h"
+#include "../common/fsm.h"
 #include "../../../conway/life/life.h"
 #include <stdarg.h>
 
@@ -16,23 +17,10 @@
 #define PORT        ( *( ( volatile unsigned int *)0x41004400 ) )
 #define PIN         ( *( ( volatile unsigned int *)0x41004410 ) )
 
-/* SysTick registers */
-#define STK_CTRL    ( *( ( volatile unsigned int *)0xE000E010 ) )
-#define STK_LOAD    ( *( ( volatile unsigned int *)0xE000E014 ) )
-#define STK_VAL     ( *( ( volatile unsigned int *)0xE000E018 ) )
-#define STK_CALIB   ( *( ( volatile unsigned int *)0xE000E01C ) )
-
-#define PM_APBA     ( *( ( volatile unsigned int *)0x40000418 ) )
-
-/* NVIC */
-#define NVIC_ISER0      ( *((volatile unsigned int *) 0xE000E100 ) )
-#define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
-
 #define LED_PIN ( 10U )
-#define INPUT_PIN ( 7U )
 
 static volatile gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
-static volatile eic_t * EIC   = ( eic_t *) EIC_BASE;
+static volatile systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
 
 /* SysTick ISR */
 void _sysTick( void )
@@ -46,15 +34,6 @@ void _sysTick( void )
         counter = 0U;
     }
     Task_Add( &Life_Tick );
-}
-
-void _eic( void )
-{   
-    Task_Flush(); 
-    Task_Add( &Life_Seed );
-
-    NVIC_ICPR0 |= ( 0x1 << 4 );
-    EIC->INTFLAG |= ( 1 << INPUT_PIN );    
 }
 
 void SetupDisplay( int num, ... )
@@ -89,16 +68,6 @@ void UpdateDisplay( void )
     }
 }
 
-void ClearDisplay( void )
-{
-    uint8_t data[2] = { 0x40, 0x00 };
-
-    for( uint16_t i = 0U; i < 1024; i++ )
-    {
-        I2C_Write( 0x3C, data, 2U );
-    }
-}
-
 void DisplayInit( void )
 {
     SetupDisplay( 2U, 0x00, 0xAE );
@@ -119,76 +88,43 @@ void DisplayInit( void )
     SetupDisplay( 4U, 0x00, 0x22, 0, 7);
 }
 
-void InputInit( void )
-{
-    /* PA 7 as input switch, pulled up internally, switch connected to GND */
-    /* DIR defaults to input */
-    GPIO->OUT |= ( 1 << INPUT_PIN );
 
-    /* Set pullup */
-    GPIO->PINCFG7 |= ( 1  << 2U );
-
-    /* Input enable */
-    GPIO->PINCFG7 |= ( 1 << 1U );
-
-    /* Enable MUX  for EIC */
-    GPIO->PINCFG7 |= ( 1 << 0U );
-
-    /* Enable in PM */
-    PM_APBA |= ( 1 << 6U );
-
-    /* Enable GCLK */
-    Clock_ConfigureGCLK( 7U, 3U, 0x5 );
-    Clock_Divide( 3U, 0xF );
-
-    /* Configure */
-    EIC->EVCTRL |= ( 1 << INPUT_PIN );
-    EIC->INTENSET |= ( 1 << INPUT_PIN );
-
-    EIC->CONFIG0 |= ( 1 << 31U );
-    EIC->CONFIG0 |= ( 0x2 << 28 );   
-
-    /* Enable EIC */
-    EIC->CTRL |= ( 1 << 1U );
-    WAITCLR( EIC->STATUS, 7U );
-
-    NVIC_ISER0 |= ( 1 << 4 );
-}
-
-int main ( void )
+static void Init ( void )
 {
     Clock_Set48MHz();
 
-    /* set port 10 to output */
     PORT |= ( 1 << LED_PIN );
     PIN |= ( 1 << LED_PIN );
 
     I2C_Init();
     DisplayInit();
-    InputInit();
-
     Life_Init( &UpdateDisplay );
 
     /* Reset SysTick Counter and COUNTFLAG */
-    STK_VAL = 0x0;
+    SYSTICK->VAL = 0x0;
 
     /* SysTick Calibration value for 10ms tick as per ARM datasheet
      * 48MHz Clock / 1000Hz tick = 0xBB80
      * Need to subtract 1 because count ends at 0 so
      * Calibration value is 0x7527F
      */
-    STK_CALIB = ( 0xBB7F );
+    SYSTICK->CALIB = ( 0xBB7F );
     
     /* 1000 / 24fps = 42ish */
-    STK_LOAD   = 0xBB7f * 42;
+    SYSTICK->LOAD   = 0xBB7f * 42;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
-    STK_CTRL |= 0x7;
+    SYSTICK->CTRL |= 0x7;
 
     /* Globally Enable Interrupts */
     asm("CPSIE IF");
 
+}
+
+int main ( void )
+{
+    Init();
     /* Endless Loop */
     while(1)
     {
