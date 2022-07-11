@@ -4,7 +4,8 @@
 
 /* ATSAMD21E18 */
 #include "../common/gpio.h"
-
+#include "../common/fsm.h"
+#include "../common/util.h"
 
 /* SysTick registers */
 #define STK_CTRL    ( *( ( volatile unsigned int *)0xE000E010 ) )
@@ -14,16 +15,63 @@
 
 #define LED_PIN ( 10U )
 
+enum Signals
+{
+    signal_SysTick = signal_Count,
+};
+
 static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
+static fsm_events_t events;
 
 /* SysTick ISR */
 void _sysTick( void )
 {
-    /* XOR Toggle of On-board LED */
-    GPIO->OUT ^= ( 1 << LED_PIN );
+    FSM_AddEvent( &events, signal_SysTick );
 }
 
-int main ( void )
+
+static fsm_status_t Idle( fsm_t * this, signal s )
+{
+    fsm_status_t ret = fsm_Ignored;
+
+    switch( s )
+    {
+        case signal_SysTick:
+        {
+            GPIO->OUT ^= ( 1 << LED_PIN );
+            ret = fsm_Handled;
+        }
+            break;
+        case signal_Enter:
+        case signal_Exit:
+        case signal_None:
+        default:
+        {
+            ret = fsm_Ignored;
+        }
+            break;
+    }
+
+    return ret;
+}
+
+static void Loop( void )
+{
+    fsm_t state;
+    state.state = &Idle;
+    signal sig = signal_None;
+
+    FSM_Init( &state, &events );
+
+    while( 1 )
+    {
+        while( !FSM_EventsAvailable( &events ) );
+        sig = FSM_GetLatestEvent( &events );
+        FSM_Dispatch( &state, sig );
+    }
+}
+
+static void Init( void )
 {
     /* set port 10 to output */
     GPIO->DIRR |= ( 1 << LED_PIN );
@@ -49,8 +97,12 @@ int main ( void )
     /* Globally Enable Interrupts */
     asm("CPSIE IF");
 
-    /* Endless Loop */
-    while(1);
+}
+
+int main ( void )
+{
+    Init();
+    Loop();
 
     return 0;
 }
