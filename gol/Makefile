@@ -1,7 +1,7 @@
 conway.bin: conway.elf
 	arm-none-eabi-objcopy -Obinary conway.elf conway.bin
-conway.elf: buffer.o clock.o i2c.o life.o conway.o vectors.o startup.o ../common/trinket.ld
-	arm-none-eabi-ld -Map conway.map -T../common/trinket.ld -o conway.elf startup.o buffer.o clock.o i2c.o life.o conway.o vectors.o -print-memory-usage -nostdlib
+conway.elf: fsm.o clock.o i2c.o life.o conway.o vectors.o startup.o ../common/trinket.ld
+	arm-none-eabi-ld -Map conway.map -T../common/trinket.ld -o conway.elf startup.o fsm.o clock.o i2c.o life.o conway.o vectors.o -print-memory-usage -nostdlib
 	arm-none-eabi-objdump -t conway.elf
 startup.o: ../common/startup.s
 	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb ../common/startup.s -o startup.o
@@ -11,14 +11,14 @@ conway.o: conway.c
 	arm-none-eabi-gcc -std=gnu99 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
 life.o: ../../../conway/life/life.c
 	arm-none-eabi-gcc -std=gnu99 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../../../conway/life/life.c -o life.o -ffreestanding
-buffer.o: ../common/buffer.c
-	arm-none-eabi-gcc -std=gnu99 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/buffer.c -o buffer.o
+fsm.o: ../common/fsm.c
+	arm-none-eabi-gcc -std=gnu99 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/fsm.c -o fsm.o
 i2c.o: ../common/i2c.c
 	arm-none-eabi-gcc -std=gnu99 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/i2c.c -o i2c.o
 clock.o: ../common/clock.c
 	arm-none-eabi-gcc -std=gnu99 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/clock.c -o clock.o
 clean:
-	rm startup.o conway.elf conway.bin conway.o conway.map vectors.o i2c.o life.o clock.o buffer.o
+	rm startup.o conway.elf conway.bin conway.o conway.map vectors.o i2c.o life.o clock.o fsm.o
 debug:
 	openocd -f /usr/share/openocd/scripts/interface/jlink.cfg -c "transport select swd" -f /usr/share/openocd/scripts/target/at91samdXX.cfg
 flash:

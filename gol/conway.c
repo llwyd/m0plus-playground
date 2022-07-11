@@ -1,4 +1,4 @@
-/* A very minimalist blinky program for the Trinket m0+
+/* Conway's game of life for the Trinket m0+ and a small lcd display
  * T.L. 2022
  * */
 
@@ -13,30 +13,24 @@
 #include "../../../conway/life/life.h"
 #include <stdarg.h>
 
-/* Registers for GPIO Config */
-#define PORT        ( *( ( volatile unsigned int *)0x41004400 ) )
-#define PIN         ( *( ( volatile unsigned int *)0x41004410 ) )
-
 #define LED_PIN ( 10U )
+
+enum Signals
+{
+    signal_SysTick = signal_Count,
+};
 
 static volatile gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
 static volatile systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
+static fsm_events_t event;
 
 /* SysTick ISR */
 void _sysTick( void )
 {
-    static uint16_t counter;
-    counter++;
-    if ( counter == 25 )
-    {
-    /* XOR Toggle of On-board LED */
-        PIN ^= ( 1 << LED_PIN );
-        counter = 0U;
-    }
-    Task_Add( &Life_Tick );
+    FSM_AddEvent( &event, signal_SysTick );
 }
 
-void SetupDisplay( int num, ... )
+static void SetupDisplay( int num, ... )
 {
     uint8_t commands[4];
     va_list args;
@@ -53,7 +47,7 @@ void SetupDisplay( int num, ... )
     while( !I2C_Write( 0x3C, commands, num ) );
 }
 
-void UpdateDisplay( void )
+static void UpdateDisplay( void )
 {
     uint8_t (*buffer)[LCD_COLUMNS] = Life_GetBuffer();
     uint8_t data[2] = { 0x40, 0x00};
@@ -68,7 +62,7 @@ void UpdateDisplay( void )
     }
 }
 
-void DisplayInit( void )
+static void DisplayInit( void )
 {
     SetupDisplay( 2U, 0x00, 0xAE );
     SetupDisplay( 3U, 0x00, 0x81, 0x7F );
@@ -76,7 +70,7 @@ void DisplayInit( void )
     SetupDisplay( 3U, 0x00, 0xD3, 0x00 );
     SetupDisplay( 2U, 0x00, 0x40 );
     SetupDisplay( 2U, 0x00, 0xa0 | 0x1 );
-    SetupDisplay( 3U , 0x00, 0xda, 0x02 | ( 1 << 4 ) | ( 0 << 5 ) );
+    SetupDisplay( 3U, 0x00, 0xda, 0x02 | ( 1 << 4 ) | ( 0 << 5 ) );
     SetupDisplay( 2U, 0x00, 0xc0 | ( 1 << 3 ) );
     SetupDisplay( 2U, 0x00, 0xA6 );
     SetupDisplay( 3U, 0x00, 0xD5, ( 15 << 4 | 0x00 ) );
@@ -93,8 +87,7 @@ static void Init ( void )
 {
     Clock_Set48MHz();
 
-    PORT |= ( 1 << LED_PIN );
-    PIN |= ( 1 << LED_PIN );
+    GPIO->DIRR |= ( 1 << LED_PIN );
 
     I2C_Init();
     DisplayInit();
@@ -122,14 +115,56 @@ static void Init ( void )
 
 }
 
+static fsm_status_t Life( fsm_t * this, signal s )
+{
+    fsm_status_t ret = fsm_Ignored;
+
+    switch( s )
+    {
+        case signal_SysTick:
+        {
+            Life_Tick();
+            ret = fsm_Handled;
+        }
+            break;
+        case signal_Enter:
+        {
+            GPIO->OUT &= ~( 1 << LED_PIN );
+        }
+            break;
+        case signal_Exit:
+        case signal_None:
+        default:
+        {
+            GPIO->OUT |= ( 1 << LED_PIN );
+            ret = fsm_Ignored;
+        }
+            break;
+    }
+
+    return ret;
+}
+
+static void Loop( void )
+{
+    fsm_t life;
+    life.state = &Life;
+    signal sig = signal_None;
+
+    FSM_Init( &life, &event );
+
+    while( 1 )
+    {
+        while( !FSM_EventsAvailable( &event ) );
+        sig = FSM_GetLatestEvent( &event );
+        FSM_Dispatch( &life, sig );
+    }
+}
+
 int main ( void )
 {
     Init();
-    /* Endless Loop */
-    while(1)
-    {
-        Task_Get();
-    }
+    Loop();
 
     return 0;
 }
