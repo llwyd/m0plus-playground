@@ -6,6 +6,8 @@
 #include "../common/gpio.h"
 #include "../common/fsm.h"
 #include "../common/util.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 #define LED_PIN ( 10U )
 
