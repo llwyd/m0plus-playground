@@ -52,9 +52,9 @@ static void UpdateDisplay( void )
     uint8_t (*buffer)[LCD_COLUMNS] = Life_GetBuffer();
     uint8_t data[2] = { 0x40, 0x00};
 
-    for( int i = 0; i < LCD_PAGES; i++ )
+    for( uint8_t i = 0; i < LCD_PAGES; i++ )
     {
-        for( int j = 0; j < LCD_COLUMNS; j++ )
+        for( uint8_t j = 0; j < LCD_COLUMNS; j++ )
         {
             data[1] = buffer[i][j];
             I2C_Write( 0x3C, data, 2U );
@@ -99,12 +99,12 @@ static void Init ( void )
     /* SysTick Calibration value for 10ms tick as per ARM datasheet
      * 48MHz Clock / 1000Hz tick = 0xBB80
      * Need to subtract 1 because count ends at 0 so
-     * Calibration value is 0x7527F
+     * Calibration value is 0xBB7F
      */
     SYSTICK->CALIB = ( 0xBB7F );
     
-    /* 1000 / 24fps = 42ish */
-    SYSTICK->LOAD   = 0xBB7f * 42;
+    /* 1000 / 24fps = 4.2ish */
+    SYSTICK->LOAD   = 0xBB7F * 4;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
@@ -115,6 +115,7 @@ static void Init ( void )
 
 }
 
+/* Only state of the program */
 static fsm_status_t Life( fsm_t * this, signal s )
 {
     fsm_status_t ret = fsm_Ignored;
@@ -145,6 +146,7 @@ static fsm_status_t Life( fsm_t * this, signal s )
     return ret;
 }
 
+/* Main Event Loop */
 static void Loop( void )
 {
     fsm_t life;
