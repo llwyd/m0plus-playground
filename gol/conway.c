@@ -15,6 +15,12 @@
 
 #define LED_PIN ( 10U )
 
+_Static_assert( LCD_COLUMNS == DISPLAY_COLUMNS, "Mismatch of column size" );
+_Static_assert( LCD_ROWS == DISPLAY_ROWS, "Mismatch of row size" );
+_Static_assert( LCD_PAGES == DISPLAY_PAGES, "Mismatch of pages" );
+_Static_assert( LCD_FULL_ROWS == DISPLAY_FULL_ROWS, "Mismatch of full row size" );
+_Static_assert( sizeof( uint8_t ) == 1U, "uint8_t > 1 byte" );
+
 enum Signals
 {
     signal_SysTick = signal_Count,
