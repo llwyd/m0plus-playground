@@ -62,10 +62,12 @@ static void Init ( void )
      * Need to subtract 1 because count ends at 0 so
      * Calibration value is 0xBB7F
      */
-    SYSTICK->CALIB = ( 0xBB7F );
+    uint32_t calib_val = 0xBB7F;
+
+    SYSTICK->CALIB = calib_val;
     
     /* 1000 / 24fps = 4.2ish */
-    SYSTICK->LOAD   = 0xBB7F * 4;
+    SYSTICK->LOAD   = ( calib_val * 42U ) / 10U;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
