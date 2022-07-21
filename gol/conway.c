@@ -94,6 +94,7 @@ static fsm_status_t Life( fsm_t * this, signal s )
         case signal_Enter:
         {
             GPIO->OUT &= ~( 1 << LED_PIN );
+            ret = fsm_Handled;
         }
             break;
         case signal_Exit:
