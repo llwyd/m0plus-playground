@@ -114,7 +114,7 @@ static fsm_status_t Life( fsm_t * this, signal s )
 static void Loop( void )
 {
     fsm_t life;
-    life.state = &Life;
+    life.state = Life;
     signal sig = signal_None;
 
     FSM_Init( &life, &event );
