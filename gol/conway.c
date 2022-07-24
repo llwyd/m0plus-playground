@@ -9,7 +9,7 @@
 #include "../common/clock.h"
 #include "../common/i2c.h"
 #include "../common/gpio.h"
-#include "../common/fsm.h"
+#include "../stateengine/src/fsm.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
 

@@ -1,3 +1,6 @@
 [submodule "conway"]
 	path = conway
 	url = git@github.com:llwyd/conway.git
+[submodule "stateengine"]
+	path = stateengine
+	url = git@github.com:llwyd/stateengine.git

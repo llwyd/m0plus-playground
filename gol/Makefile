@@ -11,8 +11,8 @@ conway.o: conway.c
 	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
 life.o: ../../../conway/life/life.c
 	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../../../conway/life/life.c -o life.o -ffreestanding
-fsm.o: ../common/fsm.c
-	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/fsm.c -o fsm.o
+fsm.o: ../stateengine/src/fsm.c
+	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -D TARGET_ARM -I../stateengine/src -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../stateengine/src/fsm.c -o fsm.o
 display.o: ../common/display.c
 	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/display.c -o display.o
 i2c.o: ../common/i2c.c
