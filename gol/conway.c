@@ -10,6 +10,7 @@
 #include "../common/i2c.h"
 #include "../common/gpio.h"
 #include "../stateengine/src/fsm.h"
+#include "../common/adc.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
 
@@ -52,6 +53,7 @@ static void Init ( void )
 
     I2C_Init();
     Display_Init();
+    ADC_Init();
     Life_Init( &UpdateLCD );
 
     /* Reset SysTick Counter and COUNTFLAG */
@@ -76,6 +78,7 @@ static void Init ( void )
     /* Globally Enable Interrupts */
     asm("CPSIE IF");
 
+    ADC_Start();
 }
 
 /* Only state of the program */
