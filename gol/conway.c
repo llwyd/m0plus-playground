@@ -27,8 +27,8 @@ _Static_assert( LCD_PAGES == DISPLAY_PAGES, "Mismatch of pages" );
 _Static_assert( LCD_FULL_ROWS == DISPLAY_FULL_ROWS, "Mismatch of full row size" );
 _Static_assert( sizeof( uint8_t ) == 1U, "uint8_t > 1 byte" );
 
-#define MAX_FRAMERATE  ( 16U )
-#define ADC_WINDOW_INC ( 16U )
+#define MAX_FRAMERATE  ( 4U )
+#define ADC_WINDOW_INC ( 64U )
 
 #define CALC_FRAMERATE( X, Y ) ( (uint8_t)( ( ( (uint16_t)(X) * (uint16_t)(Y) ) >> 8U ) + 1U ) )
 
@@ -58,6 +58,7 @@ void _adc( void )
 {
     FSM_AddEvent( &event, signal_ADCWindow );
     NVIC_ICPR0 |= ( 0x1 << 23U );
+    ADC_DisableInterrupt();
     ADC_ClearInterrupt();
 }
 
@@ -100,8 +101,8 @@ static void UpdateFramerate( void )
     uint8_t raw_adc = ADC_Read();
     uint8_t new_framerate = CALC_FRAMERATE( MAX_FRAMERATE, raw_adc );
 
-    uint32_t upper_lim = new_framerate * 16U;
-    uint32_t lower_lim = upper_lim - 16U;
+    uint32_t upper_lim = new_framerate * 64U;
+    uint32_t lower_lim = upper_lim - 64U;
     upper_lim--;
 
     Timer_UpdatePeriod( new_framerate );
