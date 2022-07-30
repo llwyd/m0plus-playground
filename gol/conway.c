@@ -11,6 +11,7 @@
 #include "../common/gpio.h"
 #include "../stateengine/src/fsm.h"
 #include "../common/adc.h"
+#include "../common/timer.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
 
@@ -59,6 +60,13 @@ void _adc( void )
     FSM_AddEvent( &event, signal_ADCWindow );
     NVIC_ICPR0 |= ( 0x1 << 23U );
     ADC_ClearInterrupt();
+}
+
+void _tcc0( void )
+{
+    GPIO->OUT ^= ( 0x1 << LED_PIN );
+    NVIC_ICPR0 |= ( 0x1 << 15U );
+    Timer_ClearInterrupt();
 }
 
 static void UpdateLCD( void )
@@ -122,6 +130,9 @@ static void Init ( void )
 
     I2C_Init();
     Display_Init();
+    Timer_Init();
+    NVIC_ISER0 |= ( 1 << 15U );
+
     ADC_Init();
     Life_Init( &UpdateLCD );
 
@@ -140,6 +151,7 @@ static void Init ( void )
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
     InitialiseADCWindow();
+    Timer_Start();
 }
 
 /* Only state of the program */
