@@ -34,7 +34,7 @@ _Static_assert( sizeof( uint8_t ) == 1U, "uint8_t > 1 byte" );
 
 enum Signals
 {
-    signal_SysTick = signal_Count,
+    signal_Timer = signal_Count,
     signal_ADCWindow,
 };
     
@@ -52,7 +52,6 @@ static fsm_events_t event;
 /* SysTick ISR */
 void _sysTick( void )
 {
-    FSM_AddEvent( &event, signal_SysTick );
 }
 
 void _adc( void )
@@ -65,6 +64,7 @@ void _adc( void )
 void _tcc0( void )
 {
     GPIO->OUT ^= ( 0x1 << LED_PIN );
+    FSM_AddEvent( &event, signal_Timer );
     NVIC_ICPR0 |= ( 0x1 << 15U );
     Timer_ClearInterrupt();
 }
@@ -104,12 +104,7 @@ static void UpdateFramerate( void )
     uint32_t lower_lim = upper_lim - 16U;
     upper_lim--;
 
-    uint32_t new_systick = ( 0xFFFFFF >> new_framerate );
-
-    SYSTICK->CTRL &= ~0x7;
-    SYSTICK->LOAD = new_systick;
-    SYSTICK->VAL = 0x0;
-    SYSTICK->CTRL |= 0x7;    
+    Timer_UpdatePeriod( new_framerate );
 
     ADC_UpdateWindow( (uint8_t)upper_lim, (uint8_t)lower_lim );
 }
@@ -142,7 +137,7 @@ static void Init ( void )
     SYSTICK->CALIB = calib_val;
     
     /* 1000 / 17fps = 5.8ish */
-    SYSTICK->LOAD = ( 0xFFFFFF );
+    SYSTICK->LOAD = ( calib_val );
 
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
@@ -161,7 +156,7 @@ static fsm_status_t Life( fsm_t * this, signal s )
 
     switch( s )
     {
-        case signal_SysTick:
+        case signal_Timer:
         {
             Life_Tick();
             ret = fsm_Handled;
