@@ -8,7 +8,7 @@ startup.o: ../common/startup.s
 vectors.o: ../common/vectors.s
 	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb  ../common/vectors.s -o vectors.o
 conway.o: conway.c
-	arm-none-eabi-gcc -std=gnu11 -O0 -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
+	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
 life.o: ../../../conway/life/life.c
 	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../../../conway/life/life.c -o life.o -ffreestanding
 fsm.o: ../stateengine/src/fsm.c
