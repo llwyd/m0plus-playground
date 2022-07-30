@@ -26,9 +26,8 @@ _Static_assert( LCD_PAGES == DISPLAY_PAGES, "Mismatch of pages" );
 _Static_assert( LCD_FULL_ROWS == DISPLAY_FULL_ROWS, "Mismatch of full row size" );
 _Static_assert( sizeof( uint8_t ) == 1U, "uint8_t > 1 byte" );
 
-#define MAX_FRAMERATE  ( 17U )
-#define MIN_FRAMERATE  (  1U )
-#define ADC_WINDOW_INC ( 15U )
+#define MAX_FRAMERATE  ( 16U )
+#define ADC_WINDOW_INC ( 16U )
 
 #define CALC_FRAMERATE( X, Y ) ( (uint8_t)( ( ( (uint16_t)(X) * (uint16_t)(Y) ) >> 8U ) + 1U ) )
 
@@ -93,17 +92,18 @@ static void UpdateFramerate( void )
     uint8_t raw_adc = ADC_Read();
     uint8_t new_framerate = CALC_FRAMERATE( MAX_FRAMERATE, raw_adc );
 
-    uint8_t upper_lim = new_framerate * 15U;
-    uint8_t lower_lim = upper_lim - 15U;
+    uint32_t upper_lim = new_framerate * 16U;
+    uint32_t lower_lim = upper_lim - 16U;
+    upper_lim--;
 
-    uint32_t new_systick =  UnsignedDIV( 100U,  new_framerate );
+    uint32_t new_systick = ( 0xFFFFFF >> new_framerate );
 
     SYSTICK->CTRL &= ~0x7;
-    SYSTICK->LOAD = ( calib_val * new_systick );
+    SYSTICK->LOAD = new_systick;
     SYSTICK->VAL = 0x0;
-    SYSTICK->CTRL |= 0x7;
+    SYSTICK->CTRL |= 0x7;    
 
-    ADC_UpdateWindow( upper_lim, lower_lim );
+    ADC_UpdateWindow( (uint8_t)upper_lim, (uint8_t)lower_lim );
 }
 
 static void InitialiseADCWindow( void )
@@ -131,8 +131,8 @@ static void Init ( void )
     SYSTICK->CALIB = calib_val;
     
     /* 1000 / 17fps = 5.8ish */
-    SYSTICK->LOAD   = calib_val * UnsignedDIV( 100, 17 );
-     
+    SYSTICK->LOAD = ( 0xFFFFFF );
+
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
     SYSTICK->CTRL |= 0x7;
