@@ -65,7 +65,6 @@ void _adc( void )
 
 void _tcc0( void )
 {
-    GPIO->OUT ^= ( 0x1 << LED_PIN );
     FSM_AddEvent( &event, signal_Timer );
     NVIC_ICPR0 |= ( 0x1 << 15U );
     Timer_ClearInterrupt();

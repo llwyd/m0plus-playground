@@ -8,15 +8,15 @@ startup.o: ../common/startup.s
 vectors.o: ../common/vectors.s
 	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb  ../common/vectors.s -o vectors.o
 conway.o: conway.c
-	arm-none-eabi-gcc -std=gnu11 -O0 -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
+	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c conway.c -o conway.o
 life.o: ../../../conway/life/life.c
 	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../../../conway/life/life.c -o life.o -ffreestanding
 fsm.o: ../stateengine/src/fsm.c
-	arm-none-eabi-gcc -std=gnu11 -O0 -Wall  -g -D TARGET_ARM -I../stateengine/src -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../stateengine/src/fsm.c -o fsm.o
+	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -D TARGET_ARM -I../stateengine/src -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../stateengine/src/fsm.c -o fsm.o
 adc.o: ../common/adc.c
-	arm-none-eabi-gcc -std=gnu11 -O0 -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/adc.c -o adc.o
+	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/adc.c -o adc.o
 timer.o: ../common/timer.c
-	arm-none-eabi-gcc -std=gnu11 -O0 -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/timer.c -o timer.o
+	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/timer.c -o timer.o
 display.o: ../common/display.c
 	arm-none-eabi-gcc -std=gnu11 -Ofast -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/display.c -o display.o
 i2c.o: ../common/i2c.c
