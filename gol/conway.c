@@ -27,8 +27,8 @@ _Static_assert( LCD_PAGES == DISPLAY_PAGES, "Mismatch of pages" );
 _Static_assert( LCD_FULL_ROWS == DISPLAY_FULL_ROWS, "Mismatch of full row size" );
 _Static_assert( sizeof( uint8_t ) == 1U, "uint8_t > 1 byte" );
 
-#define MAX_FRAMERATE  ( 4U )
-#define ADC_WINDOW_INC ( 64U )
+#define MAX_FRAMERATE  ( 8U )
+#define ADC_WINDOW_INC ( 32U )
 
 #define CALC_FRAMERATE( X, Y ) ( (uint8_t)( ( ( (uint16_t)(X) * (uint16_t)(Y) ) >> 8U ) + 1U ) )
 
@@ -47,6 +47,7 @@ static const uint32_t calib_val = 0xBB7F;
 
 static volatile gpio_t * GPIO = ( gpio_t *) GPIO_BASE;
 static volatile systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
+static volatile nvic_ipro_t * NVIC = ( nvic_ipro_t * ) NVIC_IPRO;
 static fsm_events_t event;
 
 /* SysTick ISR */
@@ -57,9 +58,8 @@ void _sysTick( void )
 void _adc( void )
 {
     FSM_AddEvent( &event, signal_ADCWindow );
-    NVIC_ICPR0 |= ( 0x1 << 23U );
-    ADC_DisableInterrupt();
     ADC_ClearInterrupt();
+    NVIC_ICPR0 |= ( 0x1 << 23U );
 }
 
 void _tcc0( void )
@@ -101,8 +101,8 @@ static void UpdateFramerate( void )
     uint8_t raw_adc = ADC_Read();
     uint8_t new_framerate = CALC_FRAMERATE( MAX_FRAMERATE, raw_adc );
 
-    uint32_t upper_lim = new_framerate * 64U;
-    uint32_t lower_lim = upper_lim - 64U;
+    uint32_t upper_lim = new_framerate * ADC_WINDOW_INC;
+    uint32_t lower_lim = upper_lim - ADC_WINDOW_INC;
     upper_lim--;
 
     Timer_UpdatePeriod( new_framerate );
@@ -123,10 +123,12 @@ static void Init ( void )
 
     GPIO->DIRR |= ( 1 << LED_PIN );
     GPIO->OUT |= ( 1 << LED_PIN );
+    NVIC->IPRO3 |= ( 0x40 << 24U );
 
     I2C_Init();
     Display_Init();
     Timer_Init();
+    
     NVIC_ISER0 |= ( 1 << 15U );
 
     ADC_Init();
@@ -142,7 +144,7 @@ static void Init ( void )
 
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
-    SYSTICK->CTRL |= 0x7;
+    SYSTICK->CTRL |= 0x5;
     
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
