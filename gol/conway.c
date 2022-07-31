@@ -57,6 +57,7 @@ void _sysTick( void )
 
 void _adc( void )
 {
+    FSM_FlushEvents( &event );
     FSM_AddEvent( &event, signal_ADCWindow );
     ADC_ClearInterrupt();
     NVIC_ICPR0 |= ( 0x1 << 23U );
