@@ -30,7 +30,7 @@
     .word _eic          /* 4 */
     .word 0x0           /* 5 */
     .word 0x0           /* 6 */
-    .word 0x0           /* 7 */
+    .word _usb          /* 7 */
     .word 0x0           /* 8 */
     .word _sercom0      /* 9 */
     .word _sercom1      /* 10 */
@@ -102,6 +102,9 @@
 
 .weak _adc
 .thumb_set _adc, dead
+
+.weak _usb
+.thumb_set _usb, dead
 
 .thumb_func
 dead:
