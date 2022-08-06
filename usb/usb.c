@@ -12,14 +12,31 @@
 
 #define LED_PIN ( 10U )
 #define PM_APBB     ( *( ( volatile uint32_t *)0x4000041C ) )
+#define USB_BASE ( 0x41005000 )
 
 enum Signals
 {
     signal_SysTick = signal_Count,
 };
 
-static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
-static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
+typedef struct
+{
+    uint8_t CTRLA:8;
+    struct res8_t _RESERVED0;
+    uint8_t SYNCBUSY:8;
+    uint8_t QOSCTRL:8;
+    struct res8_t _RESERVED1[9];
+    uint8_t FSMSTATUS:8;
+    struct res8_t _RESERVED2[22];
+    uint32_t DESCADD:32;
+    uint16_t PADCAL:16;
+}
+usb_device_t;
+
+volatile static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
+volatile static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
+volatile static usb_device_t * USB_DEVICE = ( usb_device_t * ) USB_BASE;
+
 static fsm_events_t * event_ptr;
 
 /* SysTick ISR */

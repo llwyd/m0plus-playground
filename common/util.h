@@ -47,6 +47,16 @@ typedef struct
     bool pin31:1;
 } reg_bit_t;
 
+struct res8_t
+{
+    uint8_t res:8;
+};
+
+struct rest32_t
+{
+    uint32_t res:32;
+};
+
 typedef struct
 {
     uint32_t CTRL:32;
