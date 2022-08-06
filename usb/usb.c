@@ -12,7 +12,8 @@
 
 #define LED_PIN ( 10U )
 #define PM_APBB     ( *( ( volatile uint32_t *)0x4000041C ) )
-#define USB_BASE ( 0x41005000 )
+#define USB_BASE        ( 0x41005000 )
+#define ENDPOINT_BASE   ( 0x41005100 )
 
 enum Signals
 {
@@ -31,11 +32,48 @@ typedef struct
     uint32_t DESCADD:32;
     uint16_t PADCAL:16;
 }
+usb_comms_t;
+
+typedef struct
+{
+    struct res8_t _RESERVED0[8];
+    uint16_t CTRLB:16;
+    uint8_t DADD:8;
+    struct res8_t _RESERVED1;
+    uint8_t STATUS:8;
+    struct res8_t _RESERVED2[3];
+    uint16_t FNUM:16;
+    struct res8_t _RESERVED3[2];
+    uint16_t INTENCLR:16;
+    struct res8_t _RESERVED4[2];
+    uint16_t INTENSET:16;
+    struct res8_t _RESERVED5[2];
+    uint16_t INTFLAG:16;
+    struct res8_t _RESERVED6[2];
+    uint16_t EPINTSMRY:16;
+}
 usb_device_t;
+
+typedef struct
+{
+    uint8_t EPCFGr:8;
+    struct res8_t _RESERVED0[3];
+    uint8_t EPCSTATUSCLRn:8;
+    uint8_t EPCSTATUSSETn:8;
+    uint8_t EPCSTATUSn:8;
+    uint8_t EPCINTFLAGn:8;
+    uint8_t EPCINTENCLRn:8;
+    uint8_t EPCINTENSETn:8;
+}
+usb_endpoint_t;
+
 
 volatile static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
 volatile static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
-volatile static usb_device_t * USB_DEVICE = ( usb_device_t * ) USB_BASE;
+
+volatile static usb_comms_t *   USB_COMMS =   ( usb_comms_t * ) USB_BASE;
+volatile static usb_device_t *  USB_DEVICE = ( usb_device_t * ) USB_BASE;
+volatile static usb_endpoint_t *  USB_ENDPOINT = ( usb_endpoint_t * ) ENDPOINT_BASE;
 
 static fsm_events_t * event_ptr;
 
