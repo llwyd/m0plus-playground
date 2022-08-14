@@ -15,6 +15,10 @@
 #define USB_BASE        ( 0x41005000 )
 #define ENDPOINT_BASE   ( 0x41005100 )
 
+/* NVM */
+#define NVM_CTRL       ( *( ( volatile uint32_t *)0x41004004 ) )
+#define NVM_CALIB       ( *( ( volatile uint32_t *)0x00806024 ) )
+
 enum Signals
 {
     signal_SysTick = signal_Count,
@@ -169,6 +173,19 @@ void Init_USB( void )
     
     GPIO->PINCFG25 |= ( 0x1 << 0 );
     GPIO->PMUX12 |= ( 0x6 << 4 );
+
+    /* Get and Set Calibration bits */
+    uint32_t usb_transn = ( NVM_CALIB >> 13 ) & 0x1F;
+    uint32_t usb_transp = ( NVM_CALIB >> 18 ) & 0x1F;
+    uint32_t usb_trim   = ( NVM_CALIB >> 23 ) & 0x7;
+
+    USB_COMMS->PADCAL |= usb_transp;
+    USB_COMMS->PADCAL |= ( usb_transn << 6U );
+    USB_COMMS->PADCAL |= ( usb_trim << 12 );
+
+    /* Initialisation, device mode, run in standby, enable */
+    USB_COMMS->CTRLA |= ( 0x1 << 1 );
+
 }
 
 int main ( void )
