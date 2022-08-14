@@ -71,6 +71,18 @@ typedef struct
 }
 usb_endpoint_t;
 
+typedef struct
+{
+    uint32_t ADDR:32;
+    uint32_t PCKSIZE:32;
+    uint16_t EXTREG:16;
+    uint8_t STATUS_BK:8;
+    struct res8_t _RESERVED0[5];
+}
+__attribute__((aligned(8)))descriptor_t;
+
+
+static descriptor_t bank[2];
 
 volatile static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
 volatile static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
@@ -148,7 +160,7 @@ static void Init( void )
     SYSTICK->CALIB = ( 0x270F );
     
     /* 500ms Blink is previous value * 50 */
-    SYSTICK->LOAD   = 0x270F * 50;
+    SYSTICK->LOAD   = 0xFFFFFF;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
@@ -183,6 +195,8 @@ void Init_USB( void )
     USB_COMMS->PADCAL |= ( usb_transn << 6U );
     USB_COMMS->PADCAL |= ( usb_trim << 12 );
 
+    USB_COMMS->DESCADD = (uint32_t)bank;
+
     /* Initialisation, device mode, run in standby, enable */
     USB_COMMS->CTRLA |= ( 0x1 << 1 );
 
@@ -190,6 +204,7 @@ void Init_USB( void )
 
 int main ( void )
 {
+    Init_USB();
     Init();
     Loop();
 
