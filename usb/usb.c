@@ -117,8 +117,8 @@ void _usb( void )
     if ( ( USB_DEVICE->INTFLAG & ( 0x1 << 3 ) ) )
     {
         USB_DEVICE->INTFLAG |= ( 0x1 << 3 );
+        USB_DEVICE->DADD |= ( 0x1 << 7 );
         ep_reset();
-        //USB_DEVICE->DADD |= ( 0x1 << 7 );
 
         if( usb_raw_recv[1] == 0x5 )
         {
@@ -127,16 +127,14 @@ void _usb( void )
             {
                 usb_raw_recv[i]=0x0;
             }
-        }
-        
-
+        }   
     }
 
-    if( ( USB_ENDPOINT[0].EPINTFLAGn ) )
+    if( USB_ENDPOINT[0].EPINTFLAGn )
     {
         while(1);
     }
-    else if( ep_summary )
+    if( ep_summary )
     { 
         while(1);
     }
@@ -149,6 +147,10 @@ void ep_reset( void )
     /* Control IN */
     USB_ENDPOINT[0].EPCFGn |= ( 0x1 << 4 ) | ( 0x1 );
     
+    /* Bank 0 ready */
+    USB_ENDPOINT[0].EPSTATUSSETn |= ( 0x1 << 6 );
+    USB_ENDPOINT[0].EPSTATUSCLRn |= ( 0x1 << 7 );
+    
     bank[0].ADDR = (uint32_t)usb_raw_recv;
     bank[1].ADDR = (uint32_t)usb_raw_send;
     bank[0].PCKSIZE |= (0x3 << 28) | (64 <<14);
@@ -158,10 +160,9 @@ void ep_reset( void )
 
     /* Configure ENDPOINT 0 for control */
 
-    /* Bank 0 ready */
-    USB_ENDPOINT[0].EPSTATUSSETn |= ( 0x1 << 6 );
    
     /* Enable Receive setup interrupt */
+    USB_ENDPOINT[0].EPSTATUSCLRn |= ( 0x1 << 6 );
     USB_ENDPOINT[0].EPINTENSETn |= ( 0x1 << 4 );
 }
 
@@ -239,11 +240,7 @@ static void Init( void )
 void Init_USB( void )
 {
     Clock_Set48MHz();
-    Clock_ConfigureGCLK( 0x7, 0x3, 0x6 );
-    PM_APBB |= ( 0x1 << 5 );
-
-    NVIC_ISER0 |= ( 0x1 << 7 );
-
+    
     /* Configure PA24 and PA25 as USB D+ D- */
     /* Mux G */
     GPIO->PINCFG24 |= ( 0x1 << 0 );
@@ -251,6 +248,11 @@ void Init_USB( void )
     
     GPIO->PINCFG25 |= ( 0x1 << 0 );
     GPIO->PMUX12 |= ( 0x6 << 4 );
+    
+    Clock_ConfigureGCLK( 0x7, 0x3, 0x6 );
+    PM_APBB |= ( 0x1 << 5 );
+
+    NVIC_ISER0 |= ( 0x1 << 7 );
     
     USB_COMMS->CTRLA |= ( 0x1 << 0 );
     WAITCLR( USB_COMMS->SYNCBUSY, 0 );
@@ -266,13 +268,14 @@ void Init_USB( void )
 
     USB_COMMS->DESCADD = (uint32_t)bank;
     
+    /* Full speed, attach */
+    USB_DEVICE->INTENSET |= ( 0x1 << 3 );
+    USB_DEVICE->CTRLB &= ~( 0x1 );
+    
     /* Initialisation, device mode, run in standby, enable */
-    USB_COMMS->CTRLA |= ( 0x1 << 1 );
+    USB_COMMS->CTRLA |= ( 0x1 << 1 ) | ( 0x1 << 2 );
     WAITCLR( USB_COMMS->SYNCBUSY, 1 );
     
-    /* Full speed, attach */
-    USB_DEVICE->INTENSET |= ( 0x1 << 3 ) | ( 0x1 << 7 );
-    USB_DEVICE->CTRLB &= ~( 0x1 );
 
     ep_reset();
 }
