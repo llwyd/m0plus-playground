@@ -19,6 +19,10 @@
 #define NVM_CTRL       ( *( ( volatile uint32_t *)0x41004004 ) )
 #define NVM_CALIB       ( *( ( volatile uint32_t *)0x00806024 ) )
 
+/* NVIC */
+#define NVIC_ISER0      ( *((volatile unsigned int *) 0xE000E100 ) )
+#define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
+
 enum Signals
 {
     signal_SysTick = signal_Count,
@@ -60,14 +64,14 @@ usb_device_t;
 
 typedef struct
 {
-    uint8_t EPCFGr:8;
+    uint8_t EPCFGn:8;
     struct res8_t _RESERVED0[3];
-    uint8_t EPCSTATUSCLRn:8;
-    uint8_t EPCSTATUSSETn:8;
-    uint8_t EPCSTATUSn:8;
-    uint8_t EPCINTFLAGn:8;
-    uint8_t EPCINTENCLRn:8;
-    uint8_t EPCINTENSETn:8;
+    uint8_t EPSTATUSCLRn:8;
+    uint8_t EPSTATUSSETn:8;
+    uint8_t EPSTATUSn:8;
+    uint8_t EPINTFLAGn:8;
+    uint8_t EPINTENCLRn:8;
+    uint8_t EPINTENSETn:8;
 }
 usb_endpoint_t;
 
@@ -82,7 +86,10 @@ typedef struct
 __attribute__((aligned(8)))descriptor_t;
 
 
-static descriptor_t bank[2];
+__attribute__((aligned(4))) static uint8_t usb_raw_recv[64];
+__attribute__((aligned(4))) static uint8_t usb_raw_send[64];
+
+static descriptor_t bank[16];
 
 volatile static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
 volatile static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
@@ -97,6 +104,57 @@ static fsm_events_t * event_ptr;
 void _sysTick( void )
 {
     FSM_AddEvent( event_ptr, signal_SysTick );
+}
+
+void _usb( void )
+{
+    uint32_t device_intflag = USB_DEVICE->INTFLAG;
+    uint32_t ep_summary = USB_DEVICE->EPINTSMRY;
+
+    /* Handle USB Reset */
+    if ( ( USB_DEVICE->INTFLAG & ( 0x1 << 3 ) ) )
+    {
+        USB_DEVICE->INTFLAG |= ( 0x1 << 3 );
+        //USB_DEVICE->DADD |= ( 0x1 << 7 );
+
+        if( usb_raw_recv[1] == 0x5 )
+        {
+            USB_DEVICE->DADD = ( 0x80 | usb_raw_recv[2] );
+        }
+        
+        bank[0].ADDR = (uint32_t)usb_raw_recv;
+        bank[1].ADDR = (uint32_t)usb_raw_send;
+        bank[0].PCKSIZE |= (0x3 << 28) | (64 <<14);
+        bank[1].PCKSIZE |= (0x3 << 28) | (64 <<14);
+        //bank[0].PCKSIZE &= ~( 0x3FFF );
+        //bank[1].PCKSIZE &= ~( 0x3FFF );
+
+        /* Configure ENDPOINT 0 for control */
+        
+
+        /* Control IN */
+        USB_ENDPOINT[0].EPCFGn |= ( 0x1 << 4 ) | ( 0x1 );
+
+        /* Bank 0 ready */
+        USB_ENDPOINT[0].EPSTATUSSETn |= ( 0x1 << 6 );
+        USB_ENDPOINT[0].EPSTATUSCLRn |= ( 0x1 << 7 );
+       
+        /* Enable Receive setup interrupt */
+        USB_ENDPOINT[0].EPINTENSETn |= ( 0x1 << 4 );
+        USB_ENDPOINT[0].EPINTENSETn |= ( 0x1 << 0 );
+
+    }
+
+    if( ( USB_ENDPOINT[0].EPINTFLAGn ) )
+    {
+        while(1);
+    }
+    else if( ep_summary )
+    { 
+        while(1);
+    }
+
+   NVIC_ICPR0 |= ( 0x1 << 7U );
 }
 
 
@@ -165,10 +223,9 @@ static void Init( void )
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
     SYSTICK->CTRL |= 0x7;
-
+    
     /* Globally Enable Interrupts */
     asm("CPSIE IF");
-
 }
 
 
@@ -178,6 +235,8 @@ void Init_USB( void )
     Clock_ConfigureGCLK( 0x7, 0x3, 0x6 );
     PM_APBB |= ( 0x1 << 5 );
 
+    NVIC_ISER0 |= ( 0x1 << 7 );
+
     /* Configure PA24 and PA25 as USB D+ D- */
     /* Mux G */
     GPIO->PINCFG24 |= ( 0x1 << 0 );
@@ -185,6 +244,9 @@ void Init_USB( void )
     
     GPIO->PINCFG25 |= ( 0x1 << 0 );
     GPIO->PMUX12 |= ( 0x6 << 4 );
+    
+    USB_COMMS->CTRLA |= ( 0x1 << 0 );
+    WAITCLR( USB_COMMS->SYNCBUSY, 0 );
 
     /* Get and Set Calibration bits */
     uint32_t usb_transn = ( NVM_CALIB >> 13 ) & 0x1F;
@@ -196,16 +258,20 @@ void Init_USB( void )
     USB_COMMS->PADCAL |= ( usb_trim << 12 );
 
     USB_COMMS->DESCADD = (uint32_t)bank;
-
+    
     /* Initialisation, device mode, run in standby, enable */
     USB_COMMS->CTRLA |= ( 0x1 << 1 );
-
+    WAITCLR( USB_COMMS->SYNCBUSY, 1 );
+    
+    /* Full speed, attach */
+    USB_DEVICE->INTENSET |= ( 0x1 << 3 ) | ( 0x1 << 7 );
+    USB_DEVICE->CTRLB &= ~( 0x1 );
 }
 
 int main ( void )
 {
-    Init_USB();
     Init();
+    Init_USB();
     Loop();
 
     return 0;
