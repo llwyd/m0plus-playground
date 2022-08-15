@@ -100,6 +100,8 @@ volatile static usb_endpoint_t *  USB_ENDPOINT = ( usb_endpoint_t * ) ENDPOINT_B
 
 static fsm_events_t * event_ptr;
 
+void ep_reset( void );
+
 /* SysTick ISR */
 void _sysTick( void )
 {
@@ -115,33 +117,18 @@ void _usb( void )
     if ( ( USB_DEVICE->INTFLAG & ( 0x1 << 3 ) ) )
     {
         USB_DEVICE->INTFLAG |= ( 0x1 << 3 );
+        ep_reset();
         //USB_DEVICE->DADD |= ( 0x1 << 7 );
 
         if( usb_raw_recv[1] == 0x5 )
         {
             USB_DEVICE->DADD = ( 0x80 | usb_raw_recv[2] );
+            for( int i =0; i < sizeof(usb_raw_recv);i++ )
+            {
+                usb_raw_recv[i]=0x0;
+            }
         }
         
-        bank[0].ADDR = (uint32_t)usb_raw_recv;
-        bank[1].ADDR = (uint32_t)usb_raw_send;
-        bank[0].PCKSIZE |= (0x3 << 28) | (64 <<14);
-        bank[1].PCKSIZE |= (0x3 << 28) | (64 <<14);
-        //bank[0].PCKSIZE &= ~( 0x3FFF );
-        //bank[1].PCKSIZE &= ~( 0x3FFF );
-
-        /* Configure ENDPOINT 0 for control */
-        
-
-        /* Control IN */
-        USB_ENDPOINT[0].EPCFGn |= ( 0x1 << 4 ) | ( 0x1 );
-
-        /* Bank 0 ready */
-        USB_ENDPOINT[0].EPSTATUSSETn |= ( 0x1 << 6 );
-        USB_ENDPOINT[0].EPSTATUSCLRn |= ( 0x1 << 7 );
-       
-        /* Enable Receive setup interrupt */
-        USB_ENDPOINT[0].EPINTENSETn |= ( 0x1 << 4 );
-        USB_ENDPOINT[0].EPINTENSETn |= ( 0x1 << 0 );
 
     }
 
@@ -157,6 +144,26 @@ void _usb( void )
    NVIC_ICPR0 |= ( 0x1 << 7U );
 }
 
+void ep_reset( void )
+{
+    /* Control IN */
+    USB_ENDPOINT[0].EPCFGn |= ( 0x1 << 4 ) | ( 0x1 );
+    
+    bank[0].ADDR = (uint32_t)usb_raw_recv;
+    bank[1].ADDR = (uint32_t)usb_raw_send;
+    bank[0].PCKSIZE |= (0x3 << 28) | (64 <<14);
+    bank[1].PCKSIZE |= (0x3 << 28) | (64 <<14);
+    //bank[0].PCKSIZE &= ~( 0x3FFF );
+    //bank[1].PCKSIZE &= ~( 0x3FFF );
+
+    /* Configure ENDPOINT 0 for control */
+
+    /* Bank 0 ready */
+    USB_ENDPOINT[0].EPSTATUSSETn |= ( 0x1 << 6 );
+   
+    /* Enable Receive setup interrupt */
+    USB_ENDPOINT[0].EPINTENSETn |= ( 0x1 << 4 );
+}
 
 static fsm_status_t Idle( fsm_t * this, signal s )
 {
@@ -266,6 +273,8 @@ void Init_USB( void )
     /* Full speed, attach */
     USB_DEVICE->INTENSET |= ( 0x1 << 3 ) | ( 0x1 << 7 );
     USB_DEVICE->CTRLB &= ~( 0x1 );
+
+    ep_reset();
 }
 
 int main ( void )
