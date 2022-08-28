@@ -51,11 +51,11 @@ static volatile nvic_ipro_t * NVIC = ( nvic_ipro_t * ) NVIC_IPRO;
 static fsm_events_t event;
 
 /* SysTick ISR */
-void _sysTick( void )
+void  __attribute__((interrupt("IRQ"))) _sysTick( void )
 {
 }
 
-void _adc( void )
+void __attribute__((interrupt("IRQ"))) _adc( void )
 {
     FSM_FlushEvents( &event );
     FSM_AddEvent( &event, signal_ADCWindow );
@@ -63,7 +63,7 @@ void _adc( void )
     NVIC_ICPR0 |= ( 0x1 << 23U );
 }
 
-void _tcc0( void )
+void  __attribute__((interrupt("IRQ"))) _tcc0( void )
 {
     FSM_AddEvent( &event, signal_Timer );
     NVIC_ICPR0 |= ( 0x1 << 15U );
