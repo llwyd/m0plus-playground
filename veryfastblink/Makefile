@@ -9,7 +9,7 @@ ASM = arm-none-eabi-as
 
 SRCDIR = ../common
 
-CFLAGS = -std=gnu11 -Wall  -g -I../common -I../stateengine/src -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET)
+CFLAGS = -std=gnu11 -Wall  -g -I../common -I../stateengine/src -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM
 ASMFLAGS = -g -mcpu=cortex-m0plus -mthumb 
 LDFLAGS = -print-memory-usage -nostdlib --gc-sections
 
@@ -33,7 +33,6 @@ endif
 %.o : $(COMMON_DIR)/%.s
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
 %.o : $(STATE_ENGINE_DIR)/%.c
-	echo "hi"
 	$(CC) -c $(CFLAGS) -o $@ $<
 clean:
 	rm *.o *.elf *.map *.bin

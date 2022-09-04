@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LED_PIN ( 10U )
+#define LED_PIN ( 8U )
 
 enum Signals
 {
@@ -17,7 +17,7 @@ enum Signals
 };
 
 static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
-static gpio_t * GPIO = ( gpio_t * ) GPIO_BASE;
+static gpio_t * GPIO = ( gpio_t * ) GPIOA_BASE;
 static fsm_events_t * event_ptr;
 
 /* SysTick ISR */
@@ -35,7 +35,7 @@ static fsm_status_t Idle( fsm_t * this, signal s )
     {
         case signal_SysTick:
         {
-            GPIO->OUT ^= ( 1 << LED_PIN );
+            GPIO->ODR ^= ( 1 << LED_PIN );
             ret = fsm_Handled;
         }
             break;
@@ -72,9 +72,11 @@ static void Loop( void )
 
 static void Init( void )
 {
-    /* set port 10 to output */
-    GPIO->DIRR |= ( 1 << LED_PIN );
-    GPIO->OUT |= ( 1 << LED_PIN );
+    /* Lazy way of enabling gpio a */
+    *((uint32_t *)0x40021034) |= ( 0x1 << 0 );
+
+    GPIO->MODER &= ~( 1 << 17 );
+    GPIO->MODER |= ( 1 << 16 );
  
     /* Reset SysTick Counter and COUNTFLAG */
     SYSTICK->VAL = 0x0;
@@ -87,7 +89,7 @@ static void Init( void )
     SYSTICK->CALIB = ( 0x270F );
     
     /* 500ms Blink is previous value * 50 */
-    SYSTICK->LOAD   = 0x270F * 50;
+    SYSTICK->LOAD   = 0x270F * 50 * 8;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
