@@ -1,7 +1,7 @@
 NAME = blink
 TARGET = TARGET_STM32
 
-SRC =  blink.c fsm.c
+SRC =  blink.c fsm.c clock.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc
@@ -33,6 +33,8 @@ endif
 %.o : $(COMMON_DIR)/%.s
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
 %.o : $(STATE_ENGINE_DIR)/%.c
+	$(CC) -c $(CFLAGS) -o $@ $<
+%.o : $(COMMON_DIR)/%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 clean:
 	rm *.o *.elf *.map *.bin
