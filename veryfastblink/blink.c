@@ -73,7 +73,7 @@ static void Loop( void )
 
 static void Init( void )
 {
-//    Clock_Set64MHz();
+    Clock_Set64MHz();
 
     /* Lazy way of enabling gpio a */
     *((uint32_t *)0x40021034) |= ( 0x1 << 0 );
