@@ -31,12 +31,17 @@ void _sysTick( void )
 static fsm_status_t Idle( fsm_t * this, signal s )
 {
     fsm_status_t ret = fsm_Ignored;
-
+    static uint32_t counter;
     switch( s )
     {
         case signal_SysTick:
         {
-            GPIO->ODR ^= ( 1 << LED_PIN );
+            counter++;
+            if( counter > 100 )
+            {
+                GPIO->ODR ^= ( 1 << LED_PIN );
+                counter = 0U;
+            }
             ret = fsm_Handled;
         }
             break;
@@ -89,10 +94,10 @@ static void Init( void )
      * Need to subtract 1 because count ends at 0 so
      * Calibration value is 0x270F
      */
-    SYSTICK->CALIB = ( 0x270F );
+    SYSTICK->CALIB = ( 0x9C3FF );
     
     /* 500ms Blink is previous value * 50 */
-    SYSTICK->LOAD   = 0xFFFFFF;
+    SYSTICK->LOAD   = 0x9C3FF;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
