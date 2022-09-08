@@ -92,7 +92,7 @@ static void Init( void )
     SYSTICK->CALIB = ( 0x270F );
     
     /* 500ms Blink is previous value * 50 */
-    SYSTICK->LOAD   = 0x270F * 50 * 8;
+    SYSTICK->LOAD   = 0xFFFFFF;
      
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
