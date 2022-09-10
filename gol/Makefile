@@ -1,5 +1,5 @@
 NAME = conway
-TARGET = TARGET_SAMD21
+TARGET = TARGET_STM32
 
 SRC =  conway.c fsm.c clock.c life.c adc.c timer.c i2c.c display.c
 OBJ = $(SRC:.c=.o)
