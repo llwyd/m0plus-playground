@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LED_PIN ( 8U )
+#define LED_PIN ( 7U )
 
 enum Signals
 {
@@ -18,7 +18,7 @@ enum Signals
 };
 
 static systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
-static gpio_t * GPIO = ( gpio_t * ) GPIOA_BASE;
+static gpio_t * GPIO = ( gpio_t * ) GPIOB_BASE;
 static fsm_events_t * event_ptr;
 
 /* SysTick ISR */
@@ -80,11 +80,11 @@ static void Init( void )
 {
     Clock_Set64MHz();
 
-    /* Lazy way of enabling gpio a */
-    *((uint32_t *)0x40021034) |= ( 0x1 << 0 );
+    /* Lazy way of enabling gpio b */
+    *((uint32_t *)0x40021034) |= ( 0x1 << 1 );
 
-    GPIO->MODER &= ~( 1 << 17 );
-    GPIO->MODER |= ( 1 << 16 );
+    GPIO->MODER &= ~( 1 << 15 );
+    GPIO->MODER |= ( 1 << 14 );
  
     /* Reset SysTick Counter and COUNTFLAG */
     SYSTICK->VAL = 0x0;
