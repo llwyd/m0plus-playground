@@ -10,7 +10,7 @@
 #include "../common/i2c.h"
 #include "../common/gpio.h"
 #include "../stateengine/src/fsm.h"
-#include "../common/timer.h"
+//#include "../common/timer.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
 
@@ -54,7 +54,7 @@ void  __attribute__((interrupt("IRQ"))) _tcc0( void )
 {
     FSM_AddEvent( &event, signal_Timer );
     NVIC_ICPR0 |= ( 0x1 << 15U );
-    Timer_ClearInterrupt();
+    //Timer_ClearInterrupt();
 }
 
 static void UpdateLCD( void )
@@ -65,7 +65,7 @@ static void UpdateLCD( void )
 
 static void Init ( void )
 {
-    Clock_Set64MHz();
+//    Clock_Set64MHz();
 
     /* Lazy way of enabling gpio b */
     *((uint32_t *)0x40021034) |= ( 0x1 << 1 );
@@ -74,13 +74,13 @@ static void Init ( void )
     GPIO->MODER |= ( 1 << 14 );
     
     GPIO->ODR |= ( 1 << LED_PIN );
-    NVIC->IPRO3 |= ( 0x40 << 24U );
+//    NVIC->IPRO3 |= ( 0x40 << 24U );
 
     I2C_Init();
     Display_Init();
-    Timer_Init();
+  //  Timer_Init();
     
-    NVIC_ISER0 |= ( 1 << 15U );
+  //  NVIC_ISER0 |= ( 1 << 15U );
 
     Life_Init( &UpdateLCD );
 
@@ -98,7 +98,7 @@ static void Init ( void )
     
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
-    Timer_Start();
+    //Timer_Start();
 }
 
 /* Only state of the program */
