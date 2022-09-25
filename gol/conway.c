@@ -10,7 +10,7 @@
 #include "../common/i2c.h"
 #include "../common/gpio.h"
 #include "../stateengine/src/fsm.h"
-//#include "../common/timer.h"
+#include "../common/timer.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
 
@@ -23,10 +23,6 @@
  */
 #define SYSTICK_CALIB_VAL ( 0x9C3FFU );
 
-/* NVIC */
-#define NVIC_ISER0      ( *((volatile unsigned int *) 0xE000E100 ) )
-#define NVIC_ICPR0      ( *((volatile unsigned int *) 0xE000E280 ) )
-
 _Static_assert( LCD_COLUMNS == DISPLAY_COLUMNS, "Mismatch of column size" );
 _Static_assert( LCD_ROWS == DISPLAY_ROWS, "Mismatch of row size" );
 _Static_assert( LCD_PAGES == DISPLAY_PAGES, "Mismatch of pages" );
@@ -37,24 +33,21 @@ enum Signals
 {
     signal_Timer = signal_Count,
 };
-    
 
 static volatile gpio_t * GPIO = ( gpio_t *) GPIOB_BASE;
 static volatile systick_t * SYSTICK = ( systick_t * ) SYSTICK_BASE;
-static volatile nvic_ipro_t * NVIC = ( nvic_ipro_t * ) NVIC_IPRO;
 static fsm_events_t event;
 
 /* SysTick ISR */
 void  __attribute__((interrupt("IRQ"))) _sysTick( void )
 {
-    FSM_AddEvent( &event, signal_Timer );
+    //FSM_AddEvent( &event, signal_Timer );
 }
 
-void  __attribute__((interrupt("IRQ"))) _tcc0( void )
+void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
     FSM_AddEvent( &event, signal_Timer );
-    NVIC_ICPR0 |= ( 0x1 << 15U );
-    //Timer_ClearInterrupt();
+    Timer_ClearInterrupt();
 }
 
 static void UpdateLCD( void )
@@ -72,16 +65,11 @@ static void Init ( void )
 
     GPIO->MODER &= ~( 1 << 15 );
     GPIO->MODER |= ( 1 << 14 );
-    
     GPIO->ODR |= ( 1 << LED_PIN );
-//    NVIC->IPRO3 |= ( 0x40 << 24U );
 
     I2C_Init();
     Display_Init();
-  //  Timer_Init();
-    
-  //  NVIC_ISER0 |= ( 1 << 15U );
-
+    Timer_Init(); 
     Life_Init( &UpdateLCD );
 
     /* Reset SysTick Counter and COUNTFLAG */
@@ -98,7 +86,7 @@ static void Init ( void )
     
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
-    //Timer_Start();
+    Timer_Start();
 }
 
 /* Only state of the program */
