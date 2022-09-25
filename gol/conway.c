@@ -65,7 +65,7 @@ static void UpdateLCD( void )
 
 static void Init ( void )
 {
-//    Clock_Set64MHz();
+    Clock_Set64MHz();
 
     /* Lazy way of enabling gpio b */
     *((uint32_t *)0x40021034) |= ( 0x1 << 1 );
@@ -90,7 +90,7 @@ static void Init ( void )
     SYSTICK->CALIB = SYSTICK_CALIB_VAL;
     
     /* 1000 / 17fps = 5.8ish */
-    SYSTICK->LOAD = 0xFFFFFF;
+    SYSTICK->LOAD = 0xFFFF;
 
     /* Enable SysTick interrupt, counter 
      * and set processor clock as source */
