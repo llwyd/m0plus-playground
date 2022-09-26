@@ -54,6 +54,11 @@ static void Init ( void )
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
 
+    /* microcontroller starts faster than the power on for LCD
+     * so need brief delay on startup */
+    const uint32_t delay = SysTick_GetMS();
+    while( (SysTick_GetMS() - delay) < 60U );
+
     /* Lazy way of enabling gpio b */
     *((uint32_t *)0x40021034) |= ( 0x1 << 1 );
 
