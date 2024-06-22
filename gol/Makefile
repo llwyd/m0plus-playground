@@ -11,7 +11,7 @@ SRCDIR = ../common
 STATE_ENGINE_DIR = ../stateengine/src
 LIFE_DIR = ../conway/life
 
-CFLAGS = -std=gnu11 -Wall -O3 -g -I../common -I../stateengine/src -ffreestanding -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM
+CFLAGS = -std=gnu11 -Wall -c -O3 -g -I../common -I../stateengine/src -ffreestanding -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM
 ASMFLAGS = -g -mcpu=cortex-m0plus -mthumb 
 LDFLAGS = -print-memory-usage -nostdlib --gc-sections
 
@@ -34,11 +34,11 @@ endif
 %.o : $(COMMON_DIR)/%.s
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
 %.o : $(STATE_ENGINE_DIR)/%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 %.o : $(LIFE_DIR)/%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 %.o : $(COMMON_DIR)/%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 clean:
 	rm *.o *.elf *.map *.bin
 debug:
