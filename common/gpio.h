@@ -2,11 +2,11 @@
 #define _GPIO_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 
-
-#ifdef TARGET_STM32
+#if defined TARGET_STM32 || defined TARGET_STM32F4
 
 #define GPIOA_BASE   ( 0x50000000 )
 #define GPIOB_BASE   ( 0x50000400 )
