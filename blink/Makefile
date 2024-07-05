@@ -27,7 +27,7 @@ LDFLAGS = -print-memory-usage -nostdlib --gc-sections
 
 
 STARTUP_STM32 = m0plus_vectors.o stm32_vectors.o startup.o
-STARTUP_STM32F4 = m4_vectors.o target_vectors.o startup.o
+STARTUP_STM32F4 = m4_vectors.o target_vectors.o m4startup.o
 STARTUP_SAMD21 =  ../common/m0plus_vectors.o ../common/samd21_vectors.o ../common/startup.o
 
 $(NAME).bin: $(NAME).elf
@@ -59,9 +59,17 @@ endif
 clean:
 	rm *.o *.elf *.map *.bin
 debug:
+ifeq ($(TARGET), TARGET_STM32)
 	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32g0x.cfg
+else
+	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32f4x.cfg
+endif
 flash:
+ifeq ($(TARGET), TARGET_STM32)
 	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32g0x.cfg -c "program blink.bin exit 0x08000000 verify reset"
+else
+	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32f4x.cfg -c "program blink.bin exit 0x08000000 verify reset"
+endif
 gdb:
 	arm-none-eabi-gdb -ex "target extended-remote localhost:3333" blink.elf
 dump:
