@@ -1,23 +1,50 @@
-blink.bin: blink.elf
+NAME = blink
+TARGET = TARGET_STM32
+
+SRC =  blink.c systick.c
+OBJ = $(SRC:.c=.o)
+
+CC = arm-none-eabi-gcc
+ASM = arm-none-eabi-as
+
+SRCDIR = ../common
+
+CFLAGS = -std=gnu11 -Wall  -g -I../common -I../stateengine/src -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM
+ASMFLAGS = -g -mcpu=cortex-m0plus -mthumb 
+LDFLAGS = -print-memory-usage -nostdlib --gc-sections
+
+STATE_ENGINE_DIR = ../stateengine/src
+COMMON_DIR = ../common
+
+STARTUP_STM32 = m0plus_vectors.o stm32_vectors.o startup.o
+STARTUP_SAMD21 =  ../common/m0plus_vectors.o ../common/samd21_vectors.o ../common/startup.o
+
+$(NAME).bin: $(NAME).elf
 	arm-none-eabi-objcopy -Obinary blink.elf blink.bin
-blink.elf: fsm.o blink.o vectors.o startup.o ../common/trinket.ld
-	arm-none-eabi-ld -Map blink.map -T../common/trinket.ld -o blink.elf startup.o fsm.o blink.o vectors.o -print-memory-usage -nostdlib
-	arm-none-eabi-objdump -t blink.elf
-startup.o: ../common/startup.s
-	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb ../common/startup.s -o startup.o
-vectors.o: ../common/vectors.s
-	arm-none-eabi-as -g -mcpu=cortex-m0plus -mthumb  ../common/vectors.s -o vectors.o
-blink.o: blink.c
-	arm-none-eabi-gcc -std=gnu99 -Wall  -g -nostdlib -nostartfiles -I../common -mcpu=cortex-m0plus -mthumb -c blink.c -o blink.o
-fsm.o: ../common/fsm.c
-	arm-none-eabi-gcc -std=gnu99 -Wall  -g -I../common -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -c ../common/fsm.c -o fsm.o
+ifeq ($(TARGET), TARGET_STM32)
+$(NAME).elf: $(OBJ) $(STARTUP_STM32) ../common/stm32.ld
+	echo "STM32 Target Selected"
+	arm-none-eabi-ld -Map $(NAME).map -T../common/stm32.ld -o $(NAME).elf $(OBJ) $(STARTUP_STM32) $(LDFLAGS)
+else
+$(NAME).elf: $(OBJ) $(STARTUP_SAMD21) m0.ld
+	echo "Defaulting to SAMD21"
+	arm-none-eabi-ld -Map $(NAME).map -Tm0.ld -o $(NAME).elf $(OBJ) $(STARTUP_SAMD21) $(LDFLAGS)
+endif
+%.o : $(COMMON_DIR)/%.s
+	$(ASM) -c $(ASMFLAGS) -o $@ $<
+%.o : $(STATE_ENGINE_DIR)/%.c
+	$(CC) -c $(CFLAGS) -o $@ $<
+%.o : $(COMMON_DIR)/%.c
+	$(CC) -c $(CFLAGS) -o $@ $<
 clean:
-	rm startup.o blink.elf blink.bin blink.o blink.map vectors.o fsm.o
+	rm *.o *.elf *.map *.bin
 debug:
-	openocd -f /usr/share/openocd/scripts/interface/jlink.cfg -c "transport select swd" -f /usr/share/openocd/scripts/target/at91samdXX.cfg
+	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32g0x.cfg
 flash:
-	openocd -f /usr/share/openocd/scripts/interface/jlink.cfg -c "transport select swd" -f /usr/share/openocd/scripts/target/at91samdXX.cfg -c "program blink.bin exit 0x00000000 verify reset exit"
+	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32g0x.cfg -c "program blink.bin exit 0x08000000 verify reset"
 gdb:
-	arm-none-eabi-gdb -ex "target remote localhost:3333" blink.elf
+	arm-none-eabi-gdb -ex "target extended-remote localhost:3333" blink.elf
 dump:
 	hexdump -C blink.bin
+objdump:
+	arm-none-eabi-objdump -t blink.elf
