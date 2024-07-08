@@ -6,26 +6,21 @@
 
 #define LED_PIN ( 5U )
 
-static gpio_t * GPIO = ( gpio_t * ) 0x40020000;
-
 static void Loop( void )
 {
     static uint32_t lastBlink = 0U;
     while( 1 )
     {
         while((SysTick_GetMS() - lastBlink) < 500U);
-        GPIO->ODR ^= (1<<LED_PIN);
+        GPIO_Toggle(LED_PIN);
         lastBlink = SysTick_GetMS();
     }
 }
 
 static void Init( void )
 {
-    /* Lazy way of enabling gpio a */
-    *((uint32_t *)0x40023830) |= ( 0x1 << 0 );
-
-    GPIO->MODER &= ~( 1 << 11 );
-    GPIO->MODER |= ( 1 << 10 );
+    GPIO_Init();
+    GPIO_ConfigureOutput(LED_PIN);
 
     /* SysTick Calibration value for 1ms tick as per ARM datasheet
      * 16MHz Clock / 1000Hz tick = 0x3e80

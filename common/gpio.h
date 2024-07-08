@@ -7,6 +7,7 @@
 extern void GPIO_Init(void);
 extern void GPIO_ConfigureOutput(uint16_t pin);
 extern void GPIO_Toggle(uint16_t pin);
+extern void GPIO_SetAlt(uint16_t pin, uint8_t alt_func);
 
 #if defined TARGET_STM32
 

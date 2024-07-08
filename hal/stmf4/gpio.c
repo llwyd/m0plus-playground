@@ -18,7 +18,6 @@ typedef struct
     uint32_t LCKR:32;
     uint32_t AFRL:32;
     uint32_t AFRH:32;
-    uint32_t BRR:32;
 } gpio_t;
 
 static gpio_t * const GPIO = ( gpio_t * ) 0x40020000;
@@ -37,6 +36,25 @@ extern void GPIO_ConfigureOutput(uint16_t pin)
 
 extern void GPIO_Toggle(uint16_t pin)
 {
-        GPIO->ODR ^= (1 << pin);
+    GPIO->ODR ^= (1 << pin);
+}
+
+extern void GPIO_SetAlt(uint16_t pin, uint8_t alt_func)
+{
+    GPIO->MODER |= ( 1 << ((pin << 1U) + 1U) );
+    GPIO->MODER &= ~( 1 << ((pin << 1U)) );
+    
+    if( pin < 8U )
+    {
+        uint16_t shift = pin * 4U;
+        GPIO->AFRL &= ~(0xF << shift);
+        GPIO->AFRL |= (alt_func << shift);
+    }
+    else
+    {
+        uint16_t shift = (pin - 8U) * 4U;
+        GPIO->AFRH &= ~(0xF << shift);
+        GPIO->AFRH |= (alt_func << shift);
+    }
 }
 
