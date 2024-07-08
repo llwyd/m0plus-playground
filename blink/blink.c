@@ -27,12 +27,12 @@ static void Init( void )
     GPIO->MODER &= ~( 1 << 11 );
     GPIO->MODER |= ( 1 << 10 );
 
-    /* SysTick Calibration value for 10ms tick as per ARM datasheet
-     * 1MHz Clock / 100Hz tick = 0x2710
+    /* SysTick Calibration value for 1ms tick as per ARM datasheet
+     * 16MHz Clock / 1000Hz tick = 0x3e80
      * Need to subtract 1 because count ends at 0 so
-     * Calibration value is 0x270F
+     * Calibration value is 0x3e7f
      */
-    SysTick_Init(0x270F);
+    SysTick_Init(0x3e7f);
     /* Globally Enable Interrupts */
     asm("CPSIE IF");
 }
