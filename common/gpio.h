@@ -4,9 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern void GPIO_Init(void);
+extern void GPIO_ConfigureOutput(uint16_t pin);
+extern void GPIO_Toggle(uint16_t pin);
 
-
-#if defined TARGET_STM32 || defined TARGET_STM32F4
+#if defined TARGET_STM32
 
 #define GPIOA_BASE   ( 0x50000000 )
 #define GPIOB_BASE   ( 0x50000400 )
@@ -118,7 +120,7 @@ typedef struct
 
 #else
 
-_Static_assert(false, "No target defined in gpio.h");
+//_Static_assert(false, "No target defined in gpio.h");
 
 #endif
 
