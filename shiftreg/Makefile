@@ -1,7 +1,7 @@
 NAME = shiftreg
 TARGET = TARGET_STM32F4
 
-SRC =  shiftreg.c systick.c gpio.c
+SRC =  shiftreg.c systick.c gpio.c spi.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc

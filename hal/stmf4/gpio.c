@@ -20,7 +20,7 @@ typedef struct
     uint32_t AFRH:32;
 } gpio_t;
 
-static gpio_t * const GPIO = ( gpio_t * ) 0x40020000;
+static gpio_t * GPIO = ( gpio_t * ) 0x40020000;
 
 extern void GPIO_Init(void)
 {
@@ -43,7 +43,9 @@ extern void GPIO_SetAlt(uint16_t pin, uint8_t alt_func)
 {
     GPIO->MODER |= ( 1 << ((pin << 1U) + 1U) );
     GPIO->MODER &= ~( 1 << ((pin << 1U)) );
-    
+   
+    //GPIO->OTYPER |= (1 << pin);
+
     if( pin < 8U )
     {
         uint16_t shift = pin * 4U;
