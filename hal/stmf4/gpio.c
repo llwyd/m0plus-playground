@@ -39,6 +39,16 @@ extern void GPIO_Toggle(uint16_t pin)
     GPIO->ODR ^= (1 << pin);
 }
 
+extern void GPIO_SetOutput(uint16_t pin)
+{
+    GPIO->ODR |= (1 << pin);
+}
+
+extern void GPIO_ClearOutput(uint16_t pin)
+{
+    GPIO->ODR &= ~(1 << pin);
+}
+
 extern void GPIO_SetAlt(uint16_t pin, uint8_t alt_func)
 {
     GPIO->MODER |= ( 1 << ((pin << 1U) + 1U) );

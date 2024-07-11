@@ -9,6 +9,8 @@
 #define SPI_PIN_MISO ( 6U )
 #define SPI_PIN_MOSI ( 7U )
 
+#define SHIFT_REG_RCLK ( 9U )
+
 #define SPI_ALT_FUNC (5U)
 
 static void Loop( void )
@@ -17,10 +19,12 @@ static void Loop( void )
     static uint8_t counter = 0U;
     while( 1 )
     {
-        while((SysTick_GetMS() - lastBlink) < 500U);
+        while((SysTick_GetMS() - lastBlink) < 100U);
         //GPIO_Toggle(LED_PIN);
         counter++;
+        GPIO_ClearOutput(SHIFT_REG_RCLK);
         SPI_WriteByte(counter);
+        GPIO_SetOutput(SHIFT_REG_RCLK);
         lastBlink = SysTick_GetMS();
     }
 }
@@ -28,6 +32,7 @@ static void Loop( void )
 static void Init( void )
 {
     GPIO_Init();
+    GPIO_ConfigureOutput(SHIFT_REG_RCLK);
     GPIO_SetAlt(SPI_PIN_SCK, SPI_ALT_FUNC);
     GPIO_SetAlt(SPI_PIN_MISO, SPI_ALT_FUNC);
     GPIO_SetAlt(SPI_PIN_MOSI, SPI_ALT_FUNC);
