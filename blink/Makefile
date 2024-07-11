@@ -1,7 +1,7 @@
 NAME = blink
 TARGET = TARGET_STM32F4
 
-SRC =  blink.c systick.c
+SRC =  blink.c systick.c gpio.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc
@@ -52,6 +52,8 @@ endif
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
 %.o : $(HAL_DIR)/%.s
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
+%.o : $(HAL_DIR)/%.c
+	$(CC) -c $(CFLAGS) -o $@ $<
 %.o : $(STATE_ENGINE_DIR)/%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 %.o : $(COMMON_DIR)/%.c
