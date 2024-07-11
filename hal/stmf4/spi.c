@@ -26,9 +26,9 @@ extern void SPI_Init(void)
     /* Master mode */
     SPI->CR1 |= (1<<2U);
 
+    /* LSB first */
+    SPI->CR1 |= (1<<7U);
     /* Software slave management */
-    //SPI->CR1 |=(1<<9U);
-    //SPI->CR1 |= (1 << 8U);
     SPI->CR2 |= (1<<2);
     /* Enable */
     SPI->CR1 |= (1<<6U);
@@ -37,10 +37,7 @@ extern void SPI_Init(void)
 extern void SPI_WriteByte(uint8_t data)
 {
     while(SPI->SR&(1<<7U));
-
-    //SPI->CR1 &= ~(1 << 8U);
     SPI->DR = data;
-    //SPI->CR1 |= (1 << 8U);
     /* Wait to transmit */
     while((SPI->SR&(1<<1U)) != (1<<1U));
 
