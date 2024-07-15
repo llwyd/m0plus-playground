@@ -83,23 +83,35 @@ static void InitDisplay(void)
     /* Wait 100ms for power supply to settle */
     uint32_t tick = SysTick_GetMS();
     while((SysTick_GetMS() - tick) < 1000U);
+    
+    /* Clear Display */
+    WriteCommand(0x01);
 
     /* Function Set */
     WriteCommand(0x30);
 
-    /* Turn on display and cursor */
-    WriteCommand(0x0E);
+    /* Turn on display and no cursor */
+    WriteCommand(0x0c);
 
     /* Entry Set */
     WriteCommand(0x06);
+    
+    /* Function Set */
+    WriteCommand(0x38);
 
     WriteCharacter('H');
-    WriteCharacter('E');
-    WriteCharacter('L');
-    WriteCharacter('L');
-    WriteCharacter('O');
+    WriteCharacter('e');
+    WriteCharacter('l');
+    WriteCharacter('l');
+    WriteCharacter('o');
     
-    //WriteCharacter(0b10000000);
+    WriteCommand(0xC0);
+    WriteCharacter('W');
+    WriteCharacter('o');
+    WriteCharacter('r');
+    WriteCharacter('l');
+    WriteCharacter('d');
+    
 }
 
 
