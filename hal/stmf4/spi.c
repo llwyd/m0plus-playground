@@ -27,7 +27,7 @@ extern void SPI_Init(void)
     SPI->CR1 |= (1<<2U);
 
     /* LSB first */
-    SPI->CR1 |= (1<<7U);
+//    SPI->CR1 |= (1<<7U);
     /* Software slave management */
     SPI->CR2 |= (1<<2);
     /* Enable */

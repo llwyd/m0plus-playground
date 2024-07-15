@@ -1,7 +1,7 @@
-NAME = blink
+NAME = shiftreg
 TARGET = TARGET_STM32F4
 
-SRC =  blink.c systick.c gpio.c
+SRC =  shiftreg.c systick.c gpio.c spi.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc
@@ -31,7 +31,7 @@ STARTUP_STM32F4 = m4_vectors.o target_vectors.o m4startup.o
 STARTUP_SAMD21 =  ../common/m0plus_vectors.o ../common/samd21_vectors.o ../common/startup.o
 
 $(NAME).bin: $(NAME).elf
-	arm-none-eabi-objcopy -Obinary blink.elf blink.bin
+	arm-none-eabi-objcopy -Obinary shiftreg.elf shiftreg.bin
 
 ifeq ($(TARGET), TARGET_STM32)
 $(NAME).elf: $(OBJ) $(STARTUP_STM32) $(HAL_DIR)/stm32.ld
@@ -68,13 +68,13 @@ else
 endif
 flash:
 ifeq ($(TARGET), TARGET_STM32)
-	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32g0x.cfg -c "program blink.bin exit 0x08000000 verify reset"
+	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32g0x.cfg -c "program shiftreg.bin exit 0x08000000 verify reset"
 else
-	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32f4x.cfg -c "program blink.bin exit 0x08000000 verify reset"
+	openocd -f /usr/share/openocd/scripts/interface/stlink.cfg -f /usr/share/openocd/scripts/target/stm32f4x.cfg -c "program shiftreg.bin exit 0x08000000 verify reset"
 endif
 gdb:
-	arm-none-eabi-gdb -ex "target extended-remote localhost:3333" blink.elf
+	arm-none-eabi-gdb -ex "target extended-remote localhost:3333" shiftreg.elf
 dump:
-	hexdump -C blink.bin
+	hexdump -C shiftreg.bin
 objdump:
-	arm-none-eabi-objdump -t blink.elf
+	arm-none-eabi-objdump -t shiftreg.elf
