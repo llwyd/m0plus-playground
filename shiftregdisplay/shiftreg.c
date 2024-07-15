@@ -11,10 +11,12 @@
 
 #define SHIFT_REG_RCLK ( 9U )
 
-#define DISPLAY_RS_PIN ( 2U )
-#define DISPLAY_E_PIN ( 3U )
+#define DISPLAY_RS_PIN ( 0U )
+#define DISPLAY_E_PIN ( 1U )
 
 #define SPI_ALT_FUNC (5U)
+
+static void Strobe(void);
 
 static void Loop( void )
 {
@@ -25,6 +27,10 @@ static void Loop( void )
         while((SysTick_GetMS() - lastBlink) < 100U);
         //GPIO_Toggle(LED_PIN);
         counter++;
+        //Strobe();
+        //GPIO_Toggle(DISPLAY_E_PIN);
+        //GPIO_Toggle(DISPLAY_RS_PIN);
+        //GPIO_Toggle(SHIFT_REG_RCLK);
         /*
         GPIO_ClearOutput(SHIFT_REG_RCLK);
         SPI_WriteByte(counter);
@@ -43,9 +49,9 @@ static void Delay_MS(uint32_t delay)
 static void Strobe(void)
 {
     GPIO_SetOutput(DISPLAY_E_PIN);
-    Delay_MS(100U);
+    Delay_MS(1U);
     GPIO_ClearOutput(DISPLAY_E_PIN);
-    Delay_MS(10U);
+    Delay_MS(1U);
 }
 
 static void WriteCommand(uint8_t command)
@@ -56,18 +62,19 @@ static void WriteCommand(uint8_t command)
     SPI_WriteByte(command);
     GPIO_SetOutput(SHIFT_REG_RCLK);
     
+    Delay_MS(1U); 
     Strobe();
 }
 
 static void WriteCharacter(uint8_t character)
 {
-    /* TODO: Drive RS High */
     GPIO_SetOutput(DISPLAY_RS_PIN);
     
     GPIO_ClearOutput(SHIFT_REG_RCLK);
     SPI_WriteByte(character);
     GPIO_SetOutput(SHIFT_REG_RCLK);
    
+    Delay_MS(1U); 
     Strobe();
 }
 
@@ -75,10 +82,10 @@ static void InitDisplay(void)
 {
     /* Wait 100ms for power supply to settle */
     uint32_t tick = SysTick_GetMS();
-    while((SysTick_GetMS() - tick) < 100U);
+    while((SysTick_GetMS() - tick) < 1000U);
 
     /* Function Set */
-    WriteCommand(0x38);
+    WriteCommand(0x30);
 
     /* Turn on display and cursor */
     WriteCommand(0x0E);
@@ -90,7 +97,9 @@ static void InitDisplay(void)
     WriteCharacter('E');
     WriteCharacter('L');
     WriteCharacter('L');
-    WriteCharacter('0');
+    WriteCharacter('O');
+    
+    //WriteCharacter(0b10000000);
 }
 
 
@@ -106,16 +115,17 @@ static void Init( void )
     GPIO_Init();
     GPIO_ConfigureOutput(SHIFT_REG_RCLK);
     GPIO_SetOutput(SHIFT_REG_RCLK);
-
-    GPIO_SetAlt(SPI_PIN_SCK, SPI_ALT_FUNC);
-    GPIO_SetAlt(SPI_PIN_MISO, SPI_ALT_FUNC);
-    GPIO_SetAlt(SPI_PIN_MOSI, SPI_ALT_FUNC);
-    
     
     GPIO_ConfigureOutput(DISPLAY_RS_PIN);
     GPIO_ConfigureOutput(DISPLAY_E_PIN);
+
     GPIO_ClearOutput(DISPLAY_RS_PIN);
     GPIO_ClearOutput(DISPLAY_E_PIN);
+
+    GPIO_SetAlt(SPI_PIN_SCK, SPI_ALT_FUNC);
+    GPIO_SetAlt(SPI_PIN_MISO, SPI_ALT_FUNC);
+    GPIO_SetAlt(SPI_PIN_MOSI, SPI_ALT_FUNC); 
+    
     
     SPI_Init(); 
     /* Globally Enable Interrupts */
