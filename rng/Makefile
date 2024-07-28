@@ -1,7 +1,7 @@
 NAME = rng
 TARGET = TARGET_STM32F4
 
-SRC =  rng.c systick.c gpio.c
+SRC =  rng.c systick.c gpio.c random.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc
