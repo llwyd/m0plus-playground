@@ -9,7 +9,7 @@
 #include "../common/clock.h"
 #include "../common/i2c.h"
 #include "../common/gpio.h"
-#include "../stateengine/src/fsm.h"
+#include "state.h"
 #include "../common/timer.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
@@ -25,6 +25,14 @@ _Static_assert( LCD_ROWS == DISPLAY_ROWS, "Mismatch of row size" );
 _Static_assert( LCD_PAGES == DISPLAY_PAGES, "Mismatch of pages" );
 _Static_assert( LCD_FULL_ROWS == DISPLAY_FULL_ROWS, "Mismatch of full row size" );
 _Static_assert( sizeof( uint8_t ) == 1U, "uint8_t > 1 byte" );
+
+DEFINE_STATE(Life);
+
+#define SIGNALS(SIG) \
+    SIG(Timer) \
+
+GENERATE_SIGNALS(SIGNALS);
+
 
 enum Signals
 {
@@ -73,7 +81,7 @@ static void Init ( void )
 }
 
 /* Only state of the program */
-static fsm_status_t Life( fsm_t * this, signal s )
+static state_ret_t State_Life( state_t * this, event_t s )
 {
     fsm_status_t ret = fsm_Ignored;
 
@@ -111,7 +119,7 @@ static fsm_status_t Life( fsm_t * this, signal s )
 static void Loop( void )
 {
     fsm_t life;
-    life.state = Life;
+    life.state = STATE(Life);
     signal sig = signal_None;
 
     FSM_Init( &life, &event ); 

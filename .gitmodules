@@ -2,5 +2,5 @@
 	path = conway
 	url = git@github.com:llwyd/conway.git
 [submodule "stateengine"]
-	path = stateengine
+	path = boilerplate
 	url = git@github.com:llwyd/stateengine.git
