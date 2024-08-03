@@ -37,7 +37,7 @@ DEFINE_STATE(Life);
 GENERATE_SIGNALS(SIGNALS);
 
 static volatile gpio_t * GPIO = ( gpio_t *) GPIOB_BASE;
-static volatile event_fifo_t events;
+static event_fifo_t events;
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
@@ -71,6 +71,7 @@ static void Init ( void )
     GPIO->MODER |= ( 1 << 14 );
     GPIO->ODR |= ( 1 << LED_PIN );
 
+    Events_Init(&events);
     I2C_Init();
     Display_Init();
     Timer_Init(); 
