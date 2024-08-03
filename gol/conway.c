@@ -10,6 +10,7 @@
 #include "../common/i2c.h"
 #include "../common/gpio.h"
 #include "state.h"
+#include "events.h"
 #include "../common/timer.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
@@ -33,18 +34,12 @@ DEFINE_STATE(Life);
 
 GENERATE_SIGNALS(SIGNALS);
 
-
-enum Signals
-{
-    signal_Timer = signal_Count,
-};
-
 static volatile gpio_t * GPIO = ( gpio_t *) GPIOB_BASE;
-static fsm_events_t event;
+static volatile event_fifo_t events;
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
-    FSM_AddEvent( &event, signal_Timer );
+    FIFO_Enqueue( &events, EVENT(Timer));
     Timer_ClearInterrupt();
 }
 
@@ -83,31 +78,28 @@ static void Init ( void )
 /* Only state of the program */
 static state_ret_t State_Life( state_t * this, event_t s )
 {
-    fsm_status_t ret = fsm_Ignored;
+    state_ret_t ret;
 
     switch( s )
     {
-        case signal_Timer:
+        case EVENT(Timer):
         {
             Life_Tick();
-            ret = fsm_Handled;
+            ret = HANDLED();
+            break;
         }
-        break;
-
-        case signal_Enter:
+        case EVENT(Enter):
         {
             GPIO->ODR &= ~( 1 << LED_PIN );
             Timer_Start();
-            ret = fsm_Handled;
+            ret = HANDLED();
+            break;
         }
-        break;
-
-        case signal_Exit:
-        case signal_None:
+        case EVENT(Exit):
         default:
         {
             GPIO->ODR |= ( 1 << LED_PIN );
-            ret = fsm_Ignored;
+            ret = HANDLED();
         }
         break;
     }
@@ -118,17 +110,17 @@ static state_ret_t State_Life( state_t * this, event_t s )
 /* Main Event Loop */
 static void Loop( void )
 {
-    fsm_t life;
+    state_t life;
     life.state = STATE(Life);
-    signal sig = signal_None;
+    event_t sig = EVENT(None);
 
-    FSM_Init( &life, &event ); 
-
+    FIFO_Enqueue(&events, EVENT(Enter));
+    
     while( 1 )
     {
-        while( !FSM_EventsAvailable( &event ) );
-        sig = FSM_GetLatestEvent( &event );
-        FSM_Dispatch( &life, sig );
+        while( FIFO_IsEmpty( (fifo_base_t*)&events ) );
+        sig = FIFO_Dequeue( &events );
+        STATEMACHINE_FlatDispatch( &life, sig );
     }
 }
 
