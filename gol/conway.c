@@ -11,10 +11,12 @@
 #include "../common/gpio.h"
 #include "state.h"
 #include "events.h"
+#include "fifo_base.h"
 #include "../common/timer.h"
 #include "../../../conway/life/life.h"
 #include "../common/display.h"
 #include "../common/systick.h"
+#include <stdbool.h>
 
 #define LED_PIN ( 7U )
 
