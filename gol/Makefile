@@ -1,7 +1,7 @@
 NAME = conway
 TARGET = TARGET_STM32
 
-SRC =  conway.c fsm.c clock.c life.c timer.c i2c.c display.c systick.c
+SRC =  conway.c events.c fifo_base.c state.c clock.c life.c timer.c i2c.c display.c systick.c gpio.c random.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc
@@ -9,21 +9,22 @@ ASM = arm-none-eabi-as
 
 HAL_DIR = ../hal/stm32g0
 SRCDIR = ../common
-STATE_ENGINE_DIR = ../boilerplate/src
+BOILERPLATE_DIR = ../boilerplate/src
 LIFE_DIR = ../conway/life
+OPT = -O3
 
-CFLAGS = -std=gnu11 -Wall -c -O3 -g -I../common -I../boilerplate/src -ffreestanding -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM
+CFLAGS = -std=gnu11 -Wall -Wfatal-errors -c $(OPT) -g -I$(LIFE_DIR) -I$(SRCDIR) -I$(HAL_DIR) -I$(BOILERPLATE_DIR) -ffreestanding -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM -D NDEBUG
 ASMFLAGS = -g -mcpu=cortex-m0plus -mthumb 
 LDFLAGS = -print-memory-usage -nostdlib --gc-sections
 
 COMMON_DIR = ../common
 
-STARTUP_STM32 = m0plus_vectors.o stm32_vectors.o startup.o
+STARTUP_STM32 = m0plus_vectors.o target_vectors.o startup.o
 
 $(NAME).bin: $(NAME).elf
 	arm-none-eabi-objcopy -Obinary conway.elf conway.bin
-$(NAME).elf: $(OBJ) $(STARTUP_STM32) ../common/stm32.ld
-	arm-none-eabi-ld -Map $(NAME).map -T../common/stm32.ld -o $(NAME).elf $(OBJ) $(STARTUP_STM32) $(LDFLAGS)
+$(NAME).elf: $(OBJ) $(STARTUP_STM32) $(HAL_DIR)/memory.ld
+	arm-none-eabi-ld -Map $(NAME).map -T$(HAL_DIR)/memory.ld -o $(NAME).elf $(OBJ) $(STARTUP_STM32) $(LDFLAGS)
 
 %.o : $(COMMON_DIR)/%.s
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
@@ -31,7 +32,7 @@ $(NAME).elf: $(OBJ) $(STARTUP_STM32) ../common/stm32.ld
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
 %.o : $(HAL_DIR)/%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
-%.o : $(STATE_ENGINE_DIR)/%.c
+%.o : $(BOILERPLATE_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 %.o : $(LIFE_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ $<

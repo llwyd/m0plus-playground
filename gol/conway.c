@@ -4,18 +4,23 @@
 
 /* ATSAMD21E18 */
 
-#include "../common/util.h"
-#include "../common/buffer.h"
-#include "../common/clock.h"
-#include "../common/i2c.h"
-#include "../common/gpio.h"
+#include "util.h"
+#include "clock.h"
+#include "i2c.h"
+#include "gpio.h"
 #include "state.h"
-#include "../common/timer.h"
-#include "../../../conway/life/life.h"
-#include "../common/display.h"
-#include "../common/systick.h"
+#include "events.h"
+#include "fifo_base.h"
+#include "timer.h"
+#include "life.h"
+#include "display.h"
+#include "random.h"
+#include "systick.h"
+#include <stdbool.h>
 
 #define LED_PIN ( 7U )
+#define I2C_SCL ( 11U )
+#define I2C_SDA ( 12U )
 
 #define CORE_CLOCK ( 64000000U )
 #define SYSTICK_1MS ( ( CORE_CLOCK / 1000U ) - 1U )
@@ -33,18 +38,19 @@ DEFINE_STATE(Life);
 
 GENERATE_SIGNALS(SIGNALS);
 
+static volatile gpio_t * gpio_a = ( gpio_t *) GPIOA_BASE;
+static volatile gpio_t * gpio_b = ( gpio_t *) GPIOB_BASE;
+static event_fifo_t events;
 
-enum Signals
-{
-    signal_Timer = signal_Count,
-};
-
-static volatile gpio_t * GPIO = ( gpio_t *) GPIOB_BASE;
-static fsm_events_t event;
+/* This goes into an uninitialised region so that upon the user
+ * pressing the reset button, the GOL will start again using
+ * the last seed in memory
+ */
+static random_t random_seed __attribute__((section(".no_init")));
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
-    FSM_AddEvent( &event, signal_Timer );
+    FIFO_Enqueue( &events, EVENT(Timer));
     Timer_ClearInterrupt();
 }
 
@@ -64,50 +70,54 @@ static void Init ( void )
 
     /* microcontroller starts faster than the power on for LCD
      * so need brief delay on startup */
-    const uint32_t delay = SysTick_GetMS();
-    while( (SysTick_GetMS() - delay) < 60U );
+    SysTick_Delay(60U);
 
-    /* Lazy way of enabling gpio b */
-    *((uint32_t *)0x40021034) |= ( 0x1 << 1 );
+    GPIO_Init();
+    GPIO_ConfigureOutput(gpio_b, LED_PIN);
+    GPIO_SetOutput(gpio_b, LED_PIN);
 
-    GPIO->MODER &= ~( 1 << 15 );
-    GPIO->MODER |= ( 1 << 14 );
-    GPIO->ODR |= ( 1 << LED_PIN );
+    GPIO_SetAlt(gpio_a, I2C_SCL, 0x6);
+    GPIO_SetAlt(gpio_a, I2C_SDA, 0x6);
 
+    GPIO_SetOpenDrain(gpio_a, I2C_SCL);
+    GPIO_SetOpenDrain(gpio_a, I2C_SDA);
+
+    GPIO_SetSpeed(gpio_a, I2C_SCL);
+    GPIO_SetSpeed(gpio_a, I2C_SDA);
+    
+    Events_Init(&events);
+    Random_Init(&random_seed);
     I2C_Init();
     Display_Init();
-    Timer_Init(); 
-    Life_Init( &UpdateLCD );
+    Timer_Init();
+    Life_Init( &UpdateLCD, Random_Next(&random_seed) );
 }
 
 /* Only state of the program */
 static state_ret_t State_Life( state_t * this, event_t s )
 {
-    fsm_status_t ret = fsm_Ignored;
+    state_ret_t ret;
 
     switch( s )
     {
-        case signal_Timer:
+        case EVENT(Timer):
         {
             Life_Tick();
-            ret = fsm_Handled;
+            ret = HANDLED();
+            break;
         }
-        break;
-
-        case signal_Enter:
+        case EVENT(Enter):
         {
-            GPIO->ODR &= ~( 1 << LED_PIN );
+            GPIO_ClearOutput(gpio_b, LED_PIN);
             Timer_Start();
-            ret = fsm_Handled;
+            ret = HANDLED();
+            break;
         }
-        break;
-
-        case signal_Exit:
-        case signal_None:
+        case EVENT(Exit):
         default:
         {
-            GPIO->ODR |= ( 1 << LED_PIN );
-            ret = fsm_Ignored;
+            GPIO_SetOutput(gpio_b, LED_PIN);
+            ret = HANDLED();
         }
         break;
     }
@@ -118,17 +128,17 @@ static state_ret_t State_Life( state_t * this, event_t s )
 /* Main Event Loop */
 static void Loop( void )
 {
-    fsm_t life;
+    state_t life;
     life.state = STATE(Life);
-    signal sig = signal_None;
+    event_t sig = EVENT(None);
 
-    FSM_Init( &life, &event ); 
-
+    FIFO_Enqueue(&events, EVENT(Enter));
+    
     while( 1 )
     {
-        while( !FSM_EventsAvailable( &event ) );
-        sig = FSM_GetLatestEvent( &event );
-        FSM_Dispatch( &life, sig );
+        while( FIFO_IsEmpty( (fifo_base_t*)&events ) );
+        sig = FIFO_Dequeue( &events );
+        STATEMACHINE_FlatDispatch( &life, sig );
     }
 }
 
