@@ -5,15 +5,15 @@
 /* ATSAMD21E18 */
 
 #include "util.h"
-#include "../common/clock.h"
+#include "clock.h"
 #include "i2c.h"
 #include "gpio.h"
 #include "state.h"
 #include "events.h"
 #include "fifo_base.h"
-#include "../common/timer.h"
+#include "timer.h"
 #include "life.h"
-#include "../common/display.h"
+#include "display.h"
 #include "systick.h"
 #include <stdbool.h>
 
