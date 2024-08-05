@@ -14,7 +14,7 @@ _Static_assert( sizeof( systick_t ) == 16, "Systick struct size incorrect" );
 
 static volatile systick_t * const SYSTICK = ( systick_t * ) SYSTICK_BASE;
 
-static uint32_t ms_count;
+static volatile uint32_t ms_count;
 
 /* SysTick ISR */
 void  __attribute__((interrupt("IRQ"))) _sysTick( void )

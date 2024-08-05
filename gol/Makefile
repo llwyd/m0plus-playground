@@ -1,7 +1,7 @@
 NAME = conway
 TARGET = TARGET_STM32
 
-SRC =  conway.c events.c fifo_base.c state.c clock.c life.c timer.c i2c.c display.c systick.c
+SRC =  conway.c events.c fifo_base.c state.c clock.c life.c timer.c i2c.c display.c systick.c gpio.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc

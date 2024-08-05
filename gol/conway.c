@@ -8,7 +8,7 @@
 #include "../common/buffer.h"
 #include "../common/clock.h"
 #include "../common/i2c.h"
-#include "../common/gpio.h"
+#include "gpio.h"
 #include "state.h"
 #include "events.h"
 #include "fifo_base.h"
@@ -36,7 +36,9 @@ DEFINE_STATE(Life);
 
 GENERATE_SIGNALS(SIGNALS);
 
-static volatile gpio_t * GPIO = ( gpio_t *) GPIOB_BASE;
+static volatile gpio_t * gpio_a = ( gpio_t *) GPIOA_BASE;
+static volatile gpio_t * gpio_b = ( gpio_t *) GPIOB_BASE;
+
 static event_fifo_t events;
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
@@ -63,12 +65,9 @@ static void Init ( void )
      * so need brief delay on startup */
     SysTick_Delay(60U);
 
-    /* Lazy way of enabling gpio b */
-    *((uint32_t *)0x40021034) |= ( 0x1 << 1 );
-
-    GPIO->MODER &= ~( 1 << 15 );
-    GPIO->MODER |= ( 1 << 14 );
-    GPIO->ODR |= ( 1 << LED_PIN );
+    GPIO_Init();
+    GPIO_ConfigureOutput(gpio_b, LED_PIN);
+    GPIO_SetOutput(gpio_b, LED_PIN);
 
     Events_Init(&events);
     I2C_Init();
@@ -92,7 +91,7 @@ static state_ret_t State_Life( state_t * this, event_t s )
         }
         case EVENT(Enter):
         {
-            GPIO->ODR &= ~( 1 << LED_PIN );
+            GPIO_ClearOutput(gpio_b, LED_PIN);
             Timer_Start();
             ret = HANDLED();
             break;
@@ -100,7 +99,7 @@ static state_ret_t State_Life( state_t * this, event_t s )
         case EVENT(Exit):
         default:
         {
-            GPIO->ODR |= ( 1 << LED_PIN );
+            GPIO_SetOutput(gpio_b, LED_PIN);
             ret = HANDLED();
         }
         break;
