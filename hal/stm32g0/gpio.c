@@ -28,6 +28,16 @@ extern void GPIO_ClearOutput(volatile gpio_t * const gpio, uint16_t pin)
     gpio->ODR &= ~(1 << pin);
 }
 
+extern void GPIO_SetOpenDrain(volatile gpio_t * const gpio, uint16_t pin)
+{
+    gpio->OTYPER |= ( 1 << pin );
+}
+
+extern void GPIO_SetSpeed(volatile gpio_t * const gpio, uint16_t pin)
+{
+    gpio->OSPEEDR |= ( 0x3 << (pin << 1U) );
+}
+
 extern void GPIO_SetAlt(volatile gpio_t * const gpio, uint16_t pin, uint8_t alt_func)
 {
     gpio->MODER |= ( 1 << ((pin << 1U) + 1U) );

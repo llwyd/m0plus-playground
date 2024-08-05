@@ -36,20 +36,20 @@ void I2C_Init( void )
     /* PA11, PA12, Alt Func 6 (AF6 ) */
 
     /* Set Alt func */
-    GPIO->MODER &= ~( 1 << 22 );
-    GPIO->MODER &= ~( 1 << 24 );
+//    GPIO->MODER &= ~( 1 << 22 );
+//    GPIO->MODER &= ~( 1 << 24 );
 
     /* Set Open Drain */
-    GPIO->OTYPER |= ( 1 << 11 );
-    GPIO->OTYPER |= ( 1 << 12 );
+//    GPIO->OTYPER |= ( 1 << 11 );
+//    GPIO->OTYPER |= ( 1 << 12 );
 
     /* Speedy */
-    GPIO->OSPEEDR |= ( 0x3 << 22 );
-    GPIO->OSPEEDR |= ( 0x3 << 24 );
+//    GPIO->OSPEEDR |= ( 0x3 << 22 );
+//    GPIO->OSPEEDR |= ( 0x3 << 24 );
 
     /* Alt Func 6 */
-    GPIO->AFRH |= ( 0x6 << 12 );
-    GPIO->AFRH |= ( 0x6 << 16 );
+//    GPIO->AFRH |= ( 0x6 << 12 );
+//    GPIO->AFRH |= ( 0x6 << 16 );
     
     /* Enable I2C2 Clock */
     *((uint32_t *)0x4002103C) |= ( 0x1 << 22 );

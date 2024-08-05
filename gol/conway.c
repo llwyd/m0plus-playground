@@ -19,6 +19,8 @@
 #include <stdbool.h>
 
 #define LED_PIN ( 7U )
+#define I2C_SCL ( 11U )
+#define I2C_SDA ( 12U )
 
 #define CORE_CLOCK ( 64000000U )
 #define SYSTICK_1MS ( ( CORE_CLOCK / 1000U ) - 1U )
@@ -69,6 +71,15 @@ static void Init ( void )
     GPIO_ConfigureOutput(gpio_b, LED_PIN);
     GPIO_SetOutput(gpio_b, LED_PIN);
 
+    GPIO_SetAlt(gpio_a, I2C_SCL, 0x6);
+    GPIO_SetAlt(gpio_a, I2C_SDA, 0x6);
+
+    GPIO_SetOpenDrain(gpio_a, I2C_SCL);
+    GPIO_SetOpenDrain(gpio_a, I2C_SDA);
+
+    GPIO_SetSpeed(gpio_a, I2C_SCL);
+    GPIO_SetSpeed(gpio_a, I2C_SDA);
+    
     Events_Init(&events);
     I2C_Init();
     Display_Init();

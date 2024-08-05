@@ -125,6 +125,8 @@ extern void GPIO_Toggle(volatile gpio_t * const gpio,uint16_t pin);
 extern void GPIO_SetAlt(volatile gpio_t * const gpio,uint16_t pin, uint8_t alt_func);
 extern void GPIO_SetOutput(volatile gpio_t * const gpio,uint16_t pin);
 extern void GPIO_ClearOutput(volatile gpio_t * const gpio,uint16_t pin);
+extern void GPIO_SetOpenDrain(volatile gpio_t * const gpio, uint16_t pin);
+extern void GPIO_SetSpeed(volatile gpio_t * const gpio, uint16_t pin);
 
 
 #endif /* _GPIO_H_ */
