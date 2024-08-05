@@ -4,8 +4,7 @@
 
 /* ATSAMD21E18 */
 
-#include "../common/util.h"
-#include "../common/buffer.h"
+#include "util.h"
 #include "../common/clock.h"
 #include "i2c.h"
 #include "gpio.h"
