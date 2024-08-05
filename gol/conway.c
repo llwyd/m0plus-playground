@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "life.h"
 #include "display.h"
+#include "random.h"
 #include "systick.h"
 #include <stdbool.h>
 
@@ -39,8 +40,13 @@ GENERATE_SIGNALS(SIGNALS);
 
 static volatile gpio_t * gpio_a = ( gpio_t *) GPIOA_BASE;
 static volatile gpio_t * gpio_b = ( gpio_t *) GPIOB_BASE;
-
 static event_fifo_t events;
+
+/* This goes into an uninitialised region so that upon the user
+ * pressing the reset button, the GOL will start again using
+ * the last seed in memory
+ */
+static random_t random_seed __attribute__((section(".no_init")));
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
@@ -80,6 +86,7 @@ static void Init ( void )
     GPIO_SetSpeed(gpio_a, I2C_SDA);
     
     Events_Init(&events);
+    Random_Init(&random_seed);
     I2C_Init();
     Display_Init();
     Timer_Init(); 
