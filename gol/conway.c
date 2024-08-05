@@ -89,8 +89,8 @@ static void Init ( void )
     Random_Init(&random_seed);
     I2C_Init();
     Display_Init();
-    Timer_Init(); 
-    Life_Init( &UpdateLCD );
+    Timer_Init();
+    Life_Init( &UpdateLCD, Random_Next(&random_seed) );
 }
 
 /* Only state of the program */
