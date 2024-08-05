@@ -11,7 +11,7 @@ SECTIONS
     .text :
     {
         KEEP(*(.core_vectors))
-        KEEP(*(.stm32_vectors))
+        KEEP(*(.target_vectors))
         *(.text*)
         *(.rodata*)
         . = ALIGN(4);

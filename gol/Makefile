@@ -19,12 +19,12 @@ LDFLAGS = -print-memory-usage -nostdlib --gc-sections
 
 COMMON_DIR = ../common
 
-STARTUP_STM32 = m0plus_vectors.o stm32_vectors.o startup.o
+STARTUP_STM32 = m0plus_vectors.o target_vectors.o startup.o
 
 $(NAME).bin: $(NAME).elf
 	arm-none-eabi-objcopy -Obinary conway.elf conway.bin
-$(NAME).elf: $(OBJ) $(STARTUP_STM32) ../common/stm32.ld
-	arm-none-eabi-ld -Map $(NAME).map -T../common/stm32.ld -o $(NAME).elf $(OBJ) $(STARTUP_STM32) $(LDFLAGS)
+$(NAME).elf: $(OBJ) $(STARTUP_STM32) $(HAL_DIR)/memory.ld
+	arm-none-eabi-ld -Map $(NAME).map -T$(HAL_DIR)/memory.ld -o $(NAME).elf $(OBJ) $(STARTUP_STM32) $(LDFLAGS)
 
 %.o : $(COMMON_DIR)/%.s
 	$(ASM) -c $(ASMFLAGS) -o $@ $<
