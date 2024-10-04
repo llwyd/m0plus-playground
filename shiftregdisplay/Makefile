@@ -21,7 +21,7 @@ HAL_DIR = ../common
 TARGET_CPU = cortex-m0plus
 endif
 
-CFLAGS = -std=gnu11 -Wall  -g -I$(COMMON_DIR) -I$(HAL_DIR) -I../stateengine/src -nostdlib -nostartfiles -mcpu=$(TARGET_CPU) -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM
+CFLAGS = -std=gnu11 -Wall  -g -I$(COMMON_DIR) -I$(HAL_DIR) -I../stateengine/src -nostdlib -nostartfiles -mcpu=$(TARGET_CPU) -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM -Wfatal-errors
 LDFLAGS = -print-memory-usage -nostdlib --gc-sections
 
 
