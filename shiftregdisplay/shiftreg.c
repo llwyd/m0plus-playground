@@ -54,7 +54,7 @@ static void WriteCommand(uint8_t command)
     SPI_WriteByte(command);
     GPIO_SetOutput(gpio_a,SHIFT_REG_RCLK);
     
-    Delay_MS(1U); 
+//    Delay_MS(1U); 
     Strobe();
 }
 
@@ -66,7 +66,7 @@ static void WriteCharacter(uint8_t character)
     SPI_WriteByte(character);
     GPIO_SetOutput(gpio_a,SHIFT_REG_RCLK);
    
-    Delay_MS(1U); 
+ //   Delay_MS(1U); 
     Strobe();
 }
 
@@ -74,7 +74,7 @@ static void InitDisplay(void)
 {
     /* Wait 100ms for power supply to settle */
     uint32_t tick = SysTick_GetMS();
-    while((SysTick_GetMS() - tick) < 1000U);
+    while((SysTick_GetMS() - tick) < 100U);
     
     /* Clear Display */
     WriteCommand(0x01);
