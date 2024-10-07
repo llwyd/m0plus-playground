@@ -16,6 +16,8 @@
 
 #define SPI_ALT_FUNC (5U)
 
+static volatile gpio_t * gpio_a = ( gpio_t *) GPIOA_BASE;
+
 static void Strobe(void);
 
 static void Loop( void )
@@ -25,17 +27,7 @@ static void Loop( void )
     while( 1 )
     {
         while((SysTick_GetMS() - lastBlink) < 100U);
-        //GPIO_Toggle(LED_PIN);
         counter++;
-        //Strobe();
-        //GPIO_Toggle(DISPLAY_E_PIN);
-        //GPIO_Toggle(DISPLAY_RS_PIN);
-        //GPIO_Toggle(SHIFT_REG_RCLK);
-        /*
-        GPIO_ClearOutput(SHIFT_REG_RCLK);
-        SPI_WriteByte(counter);
-        GPIO_SetOutput(SHIFT_REG_RCLK);
-        */
         lastBlink = SysTick_GetMS();
     }
 }
@@ -48,33 +40,33 @@ static void Delay_MS(uint32_t delay)
 
 static void Strobe(void)
 {
-    GPIO_SetOutput(DISPLAY_E_PIN);
+    GPIO_SetOutput(gpio_a, DISPLAY_E_PIN);
     Delay_MS(1U);
-    GPIO_ClearOutput(DISPLAY_E_PIN);
+    GPIO_ClearOutput(gpio_a, DISPLAY_E_PIN);
     Delay_MS(1U);
 }
 
 static void WriteCommand(uint8_t command)
 {
-    GPIO_ClearOutput(DISPLAY_RS_PIN);
+    GPIO_ClearOutput(gpio_a,DISPLAY_RS_PIN);
     
-    GPIO_ClearOutput(SHIFT_REG_RCLK);
+    GPIO_ClearOutput(gpio_a,SHIFT_REG_RCLK);
     SPI_WriteByte(command);
-    GPIO_SetOutput(SHIFT_REG_RCLK);
+    GPIO_SetOutput(gpio_a,SHIFT_REG_RCLK);
     
-    Delay_MS(1U); 
+//    Delay_MS(1U); 
     Strobe();
 }
 
 static void WriteCharacter(uint8_t character)
 {
-    GPIO_SetOutput(DISPLAY_RS_PIN);
+    GPIO_SetOutput(gpio_a,DISPLAY_RS_PIN);
     
-    GPIO_ClearOutput(SHIFT_REG_RCLK);
+    GPIO_ClearOutput(gpio_a,SHIFT_REG_RCLK);
     SPI_WriteByte(character);
-    GPIO_SetOutput(SHIFT_REG_RCLK);
+    GPIO_SetOutput(gpio_a,SHIFT_REG_RCLK);
    
-    Delay_MS(1U); 
+ //   Delay_MS(1U); 
     Strobe();
 }
 
@@ -82,7 +74,7 @@ static void InitDisplay(void)
 {
     /* Wait 100ms for power supply to settle */
     uint32_t tick = SysTick_GetMS();
-    while((SysTick_GetMS() - tick) < 1000U);
+    while((SysTick_GetMS() - tick) < 100U);
     
     /* Clear Display */
     WriteCommand(0x01);
@@ -125,18 +117,18 @@ static void Init( void )
     SysTick_Init(0x3e7f);
     
     GPIO_Init();
-    GPIO_ConfigureOutput(SHIFT_REG_RCLK);
-    GPIO_SetOutput(SHIFT_REG_RCLK);
+    GPIO_ConfigureOutput(gpio_a, SHIFT_REG_RCLK);
+    GPIO_SetOutput(gpio_a, SHIFT_REG_RCLK);
     
-    GPIO_ConfigureOutput(DISPLAY_RS_PIN);
-    GPIO_ConfigureOutput(DISPLAY_E_PIN);
+    GPIO_ConfigureOutput(gpio_a, DISPLAY_RS_PIN);
+    GPIO_ConfigureOutput(gpio_a,DISPLAY_E_PIN);
 
-    GPIO_ClearOutput(DISPLAY_RS_PIN);
-    GPIO_ClearOutput(DISPLAY_E_PIN);
+    GPIO_ClearOutput(gpio_a,DISPLAY_RS_PIN);
+    GPIO_ClearOutput(gpio_a,DISPLAY_E_PIN);
 
-    GPIO_SetAlt(SPI_PIN_SCK, SPI_ALT_FUNC);
-    GPIO_SetAlt(SPI_PIN_MISO, SPI_ALT_FUNC);
-    GPIO_SetAlt(SPI_PIN_MOSI, SPI_ALT_FUNC); 
+    GPIO_SetAlt(gpio_a,SPI_PIN_SCK, SPI_ALT_FUNC);
+    GPIO_SetAlt(gpio_a,SPI_PIN_MISO, SPI_ALT_FUNC);
+    GPIO_SetAlt(gpio_a,SPI_PIN_MOSI, SPI_ALT_FUNC); 
     
     
     SPI_Init(); 
