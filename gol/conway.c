@@ -136,7 +136,10 @@ static void Loop( void )
     
     while( 1 )
     {
-        while( FIFO_IsEmpty( (fifo_base_t*)&events ) );
+        while( FIFO_IsEmpty( (fifo_base_t*)&events ) )
+        {
+            asm("wfi"); 
+        }
         sig = FIFO_Dequeue( &events );
         STATEMACHINE_FlatDispatch( &life, sig );
     }
