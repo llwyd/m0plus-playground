@@ -31,6 +31,7 @@ typedef struct
     uint32_t CNT:32;
     uint32_t PSC:32;
     uint32_t ARR:32;
+    uint32_t RESVD:32;
     uint32_t CCR1:32;
     uint32_t CCR2:32;
     uint32_t CCR3:32;
@@ -64,6 +65,14 @@ static volatile gpio_t * GPIO_B = ( gpio_t * ) GPIOB_BASE;
 
 #define PIN (3U)
 
+void  __attribute__((interrupt("IRQ"))) _tim2( void )
+{
+    GPIO_B->ODR ^= (1 << PIN);
+    
+    NVIC_ICPR |= ( 0x1 << 28U );
+    TIM2->SR &= ~( 0x1 << 1U );
+}
+
 static void ConfigureGPIO(void)
 {
     *((uint32_t *)0x4002104C) |= ( 0x1 << 1 );
@@ -74,9 +83,32 @@ static void ConfigureGPIO(void)
     GPIO_B->ODR |= (1 << PIN);
 }
 
+static void ConfigureTimer(void)
+{
+    /* Enable TIM2 */
+    *((uint32_t *)0x40021058) |= ( 0x1 << 0U );
+    
+    NVIC_ISER |= ( 1 << 28U );
+    
+    TIM2->PSC = 1;
+
+    /* 1s Pulse */
+    TIM2->ARR = ( 0xFFFF );
+    TIM2->CCR1 = (0x500);
+    /* Enable Interrupts */
+    TIM2->DIER |= ( 0x1 << 1U );
+     
+    TIM2->CR1 |= ( 0x1 << 0U );
+}
+
 int main ( void )
 {
     ConfigureGPIO();
+    ConfigureTimer();
+    
+    /* Globally Enable Interrupts */
+    asm("CPSIE IF"); 
+    
     while(1)
     {
 
