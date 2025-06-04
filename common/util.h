@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #define SET(X, Y, Z) ( (X) |=  ( (Y) << (Z) ) )
 #define CLR(X, Y, Z) ( (X) &= ~( (Y) << (Z) ) )
@@ -64,5 +65,21 @@ typedef struct
 #define NVIC_ISPR ( *( ( volatile unsigned int *)0xE000E200 ) )
 #define NVIC_ICPR ( *( ( volatile unsigned int *)0xE000E280 ) )
 #define NVIC_IPRO ( *( ( volatile unsigned int *)0xE000E400 ) )
+
+
+__attribute__((weak))
+extern void * memset(void * dest, int ch, size_t len)
+{
+    uint8_t * d = (uint8_t *)dest;
+
+    while(len > 0U)
+    {
+        *d = (uint8_t)ch;
+        d++;
+        len--;
+    }
+
+    return dest;
+}
 
 #endif /* __UTIL_H_ */

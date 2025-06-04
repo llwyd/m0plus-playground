@@ -6,6 +6,9 @@
 
 #include "util.h"
 #include "systick.h"
+#include "event_heap.h"
+#include "state.h"
+#include "events.h"
 #include <stdbool.h>
 
 #define CORE_CLOCK ( 16000000U )
@@ -16,6 +19,13 @@
 #define GPIOC_BASE  ( 0x48000800 )
 #define GPIOD_BASE  ( 0x48000C00 )
 #define GPIOE_BASE  ( 0x48001000 )
+
+DEFINE_STATE(Idle);
+
+#define EVENTS(EVNT) \
+    EVNT(PQEvent) \
+
+GENERATE_EVENTS(EVENTS);
 
 typedef struct
 {
@@ -62,15 +72,45 @@ typedef struct
 static volatile timer_t * TIM2 = ( timer_t * ) TIM2_BASE;
 
 static volatile gpio_t * GPIO_B = ( gpio_t * ) GPIOB_BASE;
+static heap_t heap;
+static event_fifo_t events;
 
 #define PIN (3U)
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
-    GPIO_B->ODR ^= (1 << PIN);
     
+    FIFO_Enqueue( &events, EVENT(PQEvent));
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR &= ~( 0x1 << 1U );
+}
+
+static state_ret_t State_Idle( state_t * this, event_t s )
+{
+    state_ret_t ret;
+
+    switch( s )
+    {
+        case EVENT(PQEvent):
+        {
+            GPIO_B->ODR ^= (1 << PIN);
+            ret = HANDLED();
+            break;
+        }
+        case EVENT(Enter):
+        case EVENT(Exit):
+        {
+            ret = HANDLED();
+            break;
+        }
+        default:
+        {
+            ret = NO_PARENT(this);
+        }
+        break;
+    }
+
+    return ret;
 }
 
 static void ConfigureGPIO(void)
@@ -103,6 +143,10 @@ static void ConfigureTimer(void)
 
 int main ( void )
 {
+    state_t state;
+    Events_Init(&events);
+    Heap_Init(&heap);
+    STATEMACHINE_Init(&state, STATE(Idle));
     ConfigureGPIO();
     ConfigureTimer();
     
@@ -111,7 +155,12 @@ int main ( void )
     
     while(1)
     {
-
+        while( FIFO_IsEmpty( (fifo_base_t*)&events ) )
+        {
+            __asm("wfi");
+        }
+        event_t e = FIFO_Dequeue( &events );
+        STATEMACHINE_Dispatch(&state, e);
     }
     return 0;
 }

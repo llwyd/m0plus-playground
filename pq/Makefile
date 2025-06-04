@@ -1,7 +1,7 @@
 NAME = pq
 TARGET = TARGET_STM32
 
-SRC =  pq.c events.c systick.c
+SRC =  pq.c state.c fifo_base.c events.c event_heap.c systick.c
 OBJ = $(SRC:.c=.o)
 
 CC = arm-none-eabi-gcc
