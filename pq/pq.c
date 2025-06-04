@@ -74,13 +74,25 @@ static volatile timer_t * TIM2 = ( timer_t * ) TIM2_BASE;
 static volatile gpio_t * GPIO_B = ( gpio_t * ) GPIOB_BASE;
 static heap_t heap;
 static event_fifo_t events;
+static void EnqueueEventAfter(event_t e, uint32_t time_ms);
 
 #define PIN (3U)
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
+    heap_data_t data = Heap_PopFull(&heap);     
+    FIFO_Enqueue( &events, data.event);
+
+    if(Heap_IsEmpty(&heap))
+    {
+        TIM2->DIER &= ~( 0x1 << 1U );
+    }
+    else
+    {
+        uint32_t peek = Heap_Peek(&heap);
+        TIM2->CCR1 = peek & 0xFFFF;
+    }
     
-    FIFO_Enqueue( &events, EVENT(PQEvent));
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR &= ~( 0x1 << 1U );
 }
@@ -94,6 +106,7 @@ static state_ret_t State_Idle( state_t * this, event_t s )
         case EVENT(PQEvent):
         {
             GPIO_B->ODR ^= (1 << PIN);
+            EnqueueEventAfter(EVENT(PQEvent), 1000U);
             ret = HANDLED();
             break;
         }
@@ -120,7 +133,26 @@ static void ConfigureGPIO(void)
     GPIO_B->MODER &= ~( 1 << ((PIN << 1U) + 1U) );
     GPIO_B->MODER |= ( 1 << ((PIN << 1U)) );
     
-    GPIO_B->ODR |= (1 << PIN);
+    GPIO_B->ODR &= ~(1 << PIN);
+}
+
+static void EnqueueEventAfter(event_t e, uint32_t time_ms)
+{
+
+    uint32_t current_tick = TIM2->CNT;
+    uint32_t timeout = current_tick + time_ms;
+    heap_data_t data =
+    {
+        .key = timeout,
+        .event = e,
+    };
+    
+    Heap_Push(&heap, data);
+
+    uint32_t peek = Heap_Peek(&heap);
+
+    TIM2->CCR1 = peek & 0xFFFF;
+    TIM2->DIER |= ( 0x1 << 1U );
 }
 
 static void ConfigureTimer(void)
@@ -128,17 +160,19 @@ static void ConfigureTimer(void)
     /* Enable TIM2 */
     *((uint32_t *)0x40021058) |= ( 0x1 << 0U );
     
-    NVIC_ISER |= ( 1 << 28U );
     
-    TIM2->PSC = 1;
+    TIM2->PSC = 0x0FFF;
 
     /* 1s Pulse */
-    TIM2->ARR = ( 0xFFFF );
-    TIM2->CCR1 = (0x500);
-    /* Enable Interrupts */
-    TIM2->DIER |= ( 0x1 << 1U );
-     
+    TIM2->ARR = 0xFFFF;
     TIM2->CR1 |= ( 0x1 << 0U );
+    NVIC_ISER |= ( 1 << 28U );
+    NVIC_ICPR |= ( 0x1 << 28U );
+    TIM2->SR = 0U;
+    //TIM2->CCR1 = (250);
+    /* Enable Interrupts */
+//    TIM2->DIER |= ( 0x1 << 1U );
+     
 }
 
 int main ( void )
@@ -152,7 +186,9 @@ int main ( void )
     
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
-    
+   
+    EnqueueEventAfter(EVENT(PQEvent), 5000U);
+
     while(1)
     {
         while( FIFO_IsEmpty( (fifo_base_t*)&events ) )
