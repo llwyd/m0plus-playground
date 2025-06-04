@@ -106,7 +106,7 @@ static state_ret_t State_Idle( state_t * this, event_t s )
         case EVENT(PQEvent):
         {
             GPIO_B->ODR ^= (1 << PIN);
-            EnqueueEventAfter(EVENT(PQEvent), 1000U);
+            //EnqueueEventAfter(EVENT(PQEvent), 1000U);
             ret = HANDLED();
             break;
         }
@@ -162,10 +162,12 @@ static void ConfigureTimer(void)
     
     
     TIM2->PSC = 0x0FFF;
-
-    /* 1s Pulse */
     TIM2->ARR = 0xFFFF;
     TIM2->CR1 |= ( 0x1 << 0U );
+   
+    /* Force update */
+    TIM2->EGR |= (0x1 << 0U);
+
     NVIC_ISER |= ( 1 << 28U );
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR = 0U;
@@ -187,7 +189,10 @@ int main ( void )
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
    
-    EnqueueEventAfter(EVENT(PQEvent), 5000U);
+    EnqueueEventAfter(EVENT(PQEvent), 2000U);
+    EnqueueEventAfter(EVENT(PQEvent), 125U);
+    EnqueueEventAfter(EVENT(PQEvent), 1500U);
+    EnqueueEventAfter(EVENT(PQEvent), 250U);
 
     while(1)
     {
