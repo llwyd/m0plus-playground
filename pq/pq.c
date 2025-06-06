@@ -80,6 +80,7 @@ static void EnqueueEventAfter(event_t e, uint32_t time_ms);
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
+    ENTER_CRITICAL();
     heap_data_t data = Heap_PopFull(&heap);     
     FIFO_Enqueue( &events, data.event);
 
@@ -92,7 +93,7 @@ void  __attribute__((interrupt("IRQ"))) _tim2( void )
         uint32_t peek = Heap_Peek(&heap);
         TIM2->CCR1 = peek & 0xFFFF;
     }
-    
+    EXIT_CRITICAL(); 
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR &= ~( 0x1 << 1U );
 }
@@ -146,12 +147,16 @@ static void EnqueueEventAfter(event_t e, uint32_t time_ms)
         .key = timeout,
         .event = e,
     };
-    
-    Heap_Push(&heap, data);
 
+    ENTER_CRITICAL();
+    Heap_Push(&heap, data);
+    EXIT_CRITICAL();
+
+    ENTER_CRITICAL();
     uint32_t peek = Heap_Peek(&heap);
 
     TIM2->CCR1 = peek & 0xFFFF;
+    EXIT_CRITICAL();
     TIM2->DIER |= ( 0x1 << 1U );
 }
 
@@ -164,6 +169,7 @@ static void ConfigureTimer(void)
     TIM2->PSC = 0x0FFF;
     TIM2->ARR = 0xFFFF;
     TIM2->CR1 |= ( 0x1 << 0U );
+    GPIO_B->ODR |= (1 << PIN);
    
     /* Force update */
     TIM2->EGR |= (0x1 << 0U);
@@ -171,9 +177,6 @@ static void ConfigureTimer(void)
     NVIC_ISER |= ( 1 << 28U );
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR = 0U;
-    //TIM2->CCR1 = (250);
-    /* Enable Interrupts */
-//    TIM2->DIER |= ( 0x1 << 1U );
      
 }
 
