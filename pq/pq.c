@@ -166,7 +166,7 @@ static void ConfigureTimer(void)
     *((uint32_t *)0x40021058) |= ( 0x1 << 0U );
     
     
-    TIM2->PSC = 0x0FFF;
+    TIM2->PSC = 0x0F9F;
     TIM2->ARR = 0xFFFF;
     TIM2->CR1 |= ( 0x1 << 0U );
     GPIO_B->ODR |= (1 << PIN);
@@ -201,9 +201,11 @@ int main ( void )
     {
         while( FIFO_IsEmpty( (fifo_base_t*)&events ) )
         {
-            __asm("wfi");
+            //__asm("wfi");
         }
+        ENTER_CRITICAL();
         event_t e = FIFO_Dequeue( &events );
+        EXIT_CRITICAL();
         STATEMACHINE_Dispatch(&state, e);
     }
     return 0;

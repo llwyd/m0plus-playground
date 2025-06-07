@@ -10,7 +10,7 @@ ASM = arm-none-eabi-as
 HAL_DIR = ../hal/stm32l432
 SRCDIR = ../common
 BOILERPLATE_DIR = ../boilerplate/src
-OPT = -O0
+OPT = -O3
 
 CFLAGS = -std=gnu11 -Wall -Wfatal-errors -c $(OPT) -g -I$(SRCDIR) -I$(HAL_DIR) -I$(BOILERPLATE_DIR) -ffreestanding -nostdlib -nostartfiles -mcpu=cortex-m0plus -mthumb -fdata-sections -ffunction-sections -D $(TARGET) -D TARGET_ARM -D NDEBUG
 ASMFLAGS = -g -mcpu=cortex-m4 -mthumb 

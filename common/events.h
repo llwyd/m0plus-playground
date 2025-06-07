@@ -2,11 +2,9 @@
 #define EVENTS_H_
 
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <state.h>
-#include <string.h>
+#include "assert_bp.h"
 #include "fifo_base.h"
 
 #define FIFO_LEN (32U)
