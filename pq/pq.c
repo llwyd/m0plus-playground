@@ -176,6 +176,8 @@ static void ConfigureTimer(void)
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR = 0U;
     TIM2->CNT = 0; 
+
+    TIM2->CCMR1 |= (1 << 2);
 }
 
 void TimerStart(void)
