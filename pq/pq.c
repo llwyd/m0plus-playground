@@ -166,18 +166,22 @@ static void ConfigureTimer(void)
     *((uint32_t *)0x40021058) |= ( 0x1 << 0U );
     
     
-    TIM2->PSC = 0x0F9F;
+    TIM2->PSC = 3999;
     TIM2->ARR = 0xFFFF;
-    TIM2->CR1 |= ( 0x1 << 0U );
-    GPIO_B->ODR |= (1 << PIN);
-   
+
     /* Force update */
     TIM2->EGR |= (0x1 << 0U);
 
     NVIC_ISER |= ( 1 << 28U );
     NVIC_ICPR |= ( 0x1 << 28U );
     TIM2->SR = 0U;
-     
+    TIM2->CNT = 0; 
+}
+
+void TimerStart(void)
+{
+    TIM2->CR1 |= ( 0x1 << 0U );
+    GPIO_B->ODR |= (1 << PIN);
 }
 
 int main ( void )
@@ -195,7 +199,9 @@ int main ( void )
     EnqueueEventAfter(EVENT(PQEvent), 2000U);
     EnqueueEventAfter(EVENT(PQEvent), 125U);
     EnqueueEventAfter(EVENT(PQEvent), 1500U);
-    EnqueueEventAfter(EVENT(PQEvent), 250U);
+    EnqueueEventAfter(EVENT(PQEvent), 250U);    
+
+    TimerStart();
 
     while(1)
     {
