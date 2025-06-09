@@ -24,6 +24,7 @@ DEFINE_STATE(Idle);
 
 #define EVENTS(EVNT) \
     EVNT(PQEvent) \
+    EVNT(PQTimeout) \
 
 GENERATE_EVENTS(EVENTS);
 
@@ -81,9 +82,15 @@ static void EnqueueEventAfter(event_t e, uint32_t time_ms);
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
     ENTER_CRITICAL();
-    heap_data_t data = Heap_PopFull(&heap);     
-    FIFO_Enqueue( &events, data.event);
+    FIFO_Enqueue( &events, EVENT(PQTimeout));
+    EXIT_CRITICAL(); 
+    NVIC_ICPR |= ( 0x1 << 28U );
+    TIM2->SR &= ~( 0x1 << 1U );
+}
 
+void HandleTimeout(void)
+{
+    heap_data_t data = Heap_PopFull(&heap);     
     if(Heap_IsEmpty(&heap))
     {
         TIM2->DIER &= ~( 0x1 << 1U );
@@ -93,9 +100,10 @@ void  __attribute__((interrupt("IRQ"))) _tim2( void )
         uint32_t peek = Heap_Peek(&heap);
         TIM2->CCR1 = peek & 0xFFFF;
     }
+
+    ENTER_CRITICAL();
+    FIFO_Enqueue( &events, data.event);
     EXIT_CRITICAL(); 
-    NVIC_ICPR |= ( 0x1 << 28U );
-    TIM2->SR &= ~( 0x1 << 1U );
 }
 
 static state_ret_t State_Idle( state_t * this, event_t s )
@@ -104,6 +112,12 @@ static state_ret_t State_Idle( state_t * this, event_t s )
 
     switch( s )
     {
+        case EVENT(PQTimeout):
+        {
+            HandleTimeout();
+            ret = HANDLED();
+            break;
+        }
         case EVENT(PQEvent):
         {
             GPIO_B->ODR ^= (1 << PIN);
