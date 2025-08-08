@@ -23,8 +23,9 @@
 DEFINE_STATE(Idle);
 
 #define EVENTS(EVNT) \
-    EVNT(PQEvent) \
+    EVNT(GPIOToggle) \
     EVNT(PQTimeout) \
+    EVNT(TimerOverflow) \
 
 GENERATE_EVENTS(EVENTS);
 
@@ -81,11 +82,31 @@ static void EnqueueEventAfter(event_t e, uint32_t time_ms);
 
 void  __attribute__((interrupt("IRQ"))) _tim2( void )
 {
-    ENTER_CRITICAL();
-    FIFO_Enqueue( &events, EVENT(PQTimeout));
-    EXIT_CRITICAL(); 
+    /* Has an overflow occured? */
+    if((TIM2->SR & (0x1 << 0)))
+    {
+        ENTER_CRITICAL();
+        FIFO_Enqueue( &events, EVENT(TimerOverflow));
+        EXIT_CRITICAL();
+
+        /* Clear status register */
+        TIM2->SR &= ~( 0x1 << 0U );
+    }
+    
+    if((TIM2->SR & (0x1 << 1)))
+    {
+        ENTER_CRITICAL();
+
+        /* This function would add the timeout event
+         * to an event queue, which will subsequently
+         * be handled during the main execution loop
+         */
+        FIFO_Enqueue( &events, EVENT(PQTimeout));
+        
+        EXIT_CRITICAL();
+        TIM2->SR &= ~( 0x1 << 1U );
+    }
     NVIC_ICPR |= ( 0x1 << 28U );
-    TIM2->SR &= ~( 0x1 << 1U );
 }
 
 void HandleTimeout(void)
@@ -118,10 +139,15 @@ static state_ret_t State_Idle( state_t * this, event_t s )
             ret = HANDLED();
             break;
         }
-        case EVENT(PQEvent):
+        case EVENT(TimerOverflow):
         {
             GPIO_B->ODR ^= (1 << PIN);
-            //EnqueueEventAfter(EVENT(PQEvent), 1000U);
+            ret = HANDLED();
+            break;
+        }
+        case EVENT(GPIOToggle):
+        {
+            GPIO_B->ODR ^= (1 << PIN);
             ret = HANDLED();
             break;
         }
@@ -192,6 +218,7 @@ static void ConfigureTimer(void)
     TIM2->CNT = 0; 
 
     TIM2->CCMR1 |= (1 << 2);
+    TIM2->DIER |= ( 0x1 << 0U );
 }
 
 void TimerStart(void)
@@ -212,10 +239,11 @@ int main ( void )
     /* Globally Enable Interrupts */
     asm("CPSIE IF"); 
    
-    EnqueueEventAfter(EVENT(PQEvent), 2000U);
-    EnqueueEventAfter(EVENT(PQEvent), 125U);
-    EnqueueEventAfter(EVENT(PQEvent), 1500U);
-    EnqueueEventAfter(EVENT(PQEvent), 250U);    
+    EnqueueEventAfter(EVENT(GPIOToggle), 2000U);
+    EnqueueEventAfter(EVENT(GPIOToggle), 125U);
+    EnqueueEventAfter(EVENT(GPIOToggle), 126U);
+    EnqueueEventAfter(EVENT(GPIOToggle), 1500U);
+    EnqueueEventAfter(EVENT(GPIOToggle), 250U);    
 
     TimerStart();
 
